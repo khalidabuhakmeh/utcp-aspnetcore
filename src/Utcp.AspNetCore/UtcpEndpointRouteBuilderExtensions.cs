@@ -38,13 +38,17 @@ public static class UtcpEndpointRouteBuilderExtensions
     {
         // Validate eagerly at mapping time so misconfiguration fails at startup with a clear message.
         if (endpoints.ServiceProvider.GetService<UtcpManualProvider>() is null)
+        {
             throw new InvalidOperationException(
                 "MapUtcp() requires UTCP services. Call builder.Services.AddUtcp() before building the app.");
+        }
 
         var documentName = endpoints.ServiceProvider
             .GetRequiredService<IOptions<UtcpOptions>>().Value.DocumentName;
         if (!OpenApiRegistration.IsRegistered(endpoints.ServiceProvider, documentName))
+        {
             throw OpenApiRegistration.CreateMissingOpenApiException(documentName, "MapUtcp()");
+        }
 
         return endpoints.MapGet(pattern, async (HttpContext ctx) =>
         {

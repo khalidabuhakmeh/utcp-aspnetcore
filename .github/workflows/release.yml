@@ -1,0 +1,26 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - run: dotnet build -c Release
+      - run: dotnet test -c Release --no-build
+      - name: Pack
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          dotnet pack src/Utcp.AspNetCore -c Release /p:Version=$VERSION /p:ContinuousIntegrationBuild=true -o out
+      - name: Push to NuGet
+        run: dotnet nuget push "out/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: out/*.nupkg
+          generate_release_notes: true

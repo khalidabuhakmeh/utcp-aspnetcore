@@ -1,10 +1,19 @@
 # Utcp.AspNetCore
 
+[![CI](https://github.com/khalidabuhakmeh/utcp-aspnetcore/actions/workflows/ci.yml/badge.svg)](https://github.com/khalidabuhakmeh/utcp-aspnetcore/actions/workflows/ci.yml)
+[![NuGet](https://img.shields.io/nuget/v/Utcp.AspNetCore.svg)](https://www.nuget.org/packages/Utcp.AspNetCore)
+
 Utcp.AspNetCore publishes a [UTCP](https://www.utcp.io/) (Universal Tool Calling Protocol) v1.1 manual at `GET /utcp`. It builds the manual automatically from your app's ASP.NET Core OpenAPI document, so AI agents can discover and call your HTTP endpoints directly.
+
+## Install
+
+```sh
+dotnet add package Utcp.AspNetCore
+```
 
 ## Quickstart
 
-Add a project reference to `src/Utcp.AspNetCore`, then:
+Then:
 
 ```csharp
 using Utcp.AspNetCore;
@@ -101,3 +110,7 @@ jb cleanupcode utcp-library.sln --profile="Utcp Cleanup"
 ```
 
 Settings live in `.editorconfig` and the team-shared `utcp-library.sln.DotSettings` (which defines the "Utcp Cleanup" profile and makes it the default).
+
+## Releasing
+
+Push a tag like `v0.2.0`. The release workflow builds, tests, packs with the version taken from the tag, pushes to NuGet, and creates a GitHub release with the `.nupkg` attached. Requires the `NUGET_API_KEY` repository secret.

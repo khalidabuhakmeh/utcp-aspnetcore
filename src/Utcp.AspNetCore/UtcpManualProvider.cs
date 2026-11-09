@@ -25,11 +25,19 @@ internal sealed class UtcpManualProvider(IOptions<UtcpOptions> options)
 
     private async Task<OpenApiDocument> GetDocumentAsync(IServiceProvider sp)
     {
-        if (_doc is not null) return _doc;
+        if (_doc is not null)
+        {
+            return _doc;
+        }
+
         await _gate.WaitAsync();
         try
         {
-            if (_doc is not null) return _doc;
+            if (_doc is not null)
+            {
+                return _doc;
+            }
+
             // Both IDocumentProvider and OpenApiDocumentService are internal in Microsoft.AspNetCore.OpenApi 9.
             // IDocumentProvider resolves scoped services from the root provider (fails with scope validation),
             // so use the keyed OpenApiDocumentService with the request-scoped provider, like MapOpenApi does.
@@ -40,8 +48,11 @@ internal sealed class UtcpManualProvider(IOptions<UtcpOptions> options)
                 : (sp as IKeyedServiceProvider)?.GetKeyedService(serviceType, _options.DocumentName);
             var method = serviceType?.GetMethod("GetOpenApiDocumentAsync");
             if (service is null || method is null)
+            {
                 throw new InvalidOperationException(
                     $"OpenAPI document '{_options.DocumentName}' is not registered. Call services.AddOpenApi() before using AddUtcp()/MapUtcp().");
+            }
+
             var args = method.GetParameters().Select(pi =>
                 pi.ParameterType == typeof(IServiceProvider) ? sp
                 : pi.ParameterType == typeof(CancellationToken) ? CancellationToken.None
@@ -54,8 +65,11 @@ internal sealed class UtcpManualProvider(IOptions<UtcpOptions> options)
             generated.SerializeAsV3(new OpenApiJsonWriter(sw));
             var parsed = new OpenApiStringReader().Read(sw.ToString(), out var diag);
             if (parsed is null || (diag.Errors.Count > 0 && parsed.Paths is null))
+            {
                 throw new InvalidOperationException("Failed to parse OpenAPI document: " +
                                                     string.Join("; ", diag.Errors.Select(e => e.Message)));
+            }
+
             _doc = parsed;
             return parsed;
         }

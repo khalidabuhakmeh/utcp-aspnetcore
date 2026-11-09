@@ -22,7 +22,11 @@ public static class OpenApiSchemaConverter
     /// <returns>The inlined JSON Schema.</returns>
     public static JsonObject ToJsonObject(OpenApiSchema? schema, OpenApiDocument doc)
     {
-        if (schema is null) return new JsonObject();
+        if (schema is null)
+        {
+            return new JsonObject();
+        }
+
         var node = Serialize(schema);
         var resolved = Resolve(node, doc, new HashSet<string>());
         return resolved as JsonObject ?? new JsonObject();
@@ -47,7 +51,11 @@ public static class OpenApiSchemaConverter
                     if (rs.StartsWith(RefPrefix, StringComparison.Ordinal))
                     {
                         var id = rs[RefPrefix.Length..];
-                        if (visiting.Contains(id)) return obj.DeepClone(); // cycle: leave $ref
+                        if (visiting.Contains(id))
+                        {
+                            return obj.DeepClone(); // cycle: leave $ref
+                        }
+
                         if (doc.Components?.Schemas is { } schemas && schemas.TryGetValue(id, out var target))
                         {
                             visiting.Add(id);
@@ -69,11 +77,18 @@ public static class OpenApiSchemaConverter
 
                 var result = new JsonObject();
                 foreach (var kv in obj)
+                {
                     result[kv.Key] = Resolve(kv.Value, doc, visiting);
+                }
+
                 return result;
             case JsonArray arr:
                 var na = new JsonArray();
-                foreach (var item in arr) na.Add(Resolve(item, doc, visiting));
+                foreach (var item in arr)
+                {
+                    na.Add(Resolve(item, doc, visiting));
+                }
+
                 return na;
             default:
                 return node?.DeepClone();

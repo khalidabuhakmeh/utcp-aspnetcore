@@ -27,7 +27,7 @@ public static class UtcpServiceCollectionExtensions
     ///     <code>
     /// builder.Services.AddOpenApi();
     /// builder.Services.AddUtcp(o => o.ManualVersion = "2.1.0");
-    /// 
+    ///
     /// var app = builder.Build();
     /// app.MapUtcp();
     /// </code>
@@ -35,7 +35,11 @@ public static class UtcpServiceCollectionExtensions
     public static IServiceCollection AddUtcp(this IServiceCollection services, Action<UtcpOptions>? configure = null)
     {
         var b = services.AddOptions<UtcpOptions>();
-        if (configure is not null) b.Configure(configure);
+        if (configure is not null)
+        {
+            b.Configure(configure);
+        }
+
         services.AddSingleton<UtcpManualProvider>();
         // Fail fast at host startup (rather than on the first /utcp request) when AddOpenApi() is missing.
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, UtcpStartupValidator>());

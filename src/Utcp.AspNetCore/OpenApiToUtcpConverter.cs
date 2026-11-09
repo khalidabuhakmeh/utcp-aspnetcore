@@ -47,7 +47,11 @@ public static class OpenApiToUtcpConverter
         foreach (var (opType, op) in item.Operations)
         {
             var method = MethodName(opType);
-            if (method is null || string.IsNullOrEmpty(op.OperationId)) continue;
+            if (method is null || string.IsNullOrEmpty(op.OperationId))
+            {
+                continue;
+            }
+
             manual.Tools.Add(BuildTool(doc, pathKey, item, method, op, baseUrl));
         }
 
@@ -66,12 +70,27 @@ public static class OpenApiToUtcpConverter
             .Concat(op.Parameters);
         foreach (var p in parameters)
         {
-            if (p.In is not (ParameterLocation.Path or ParameterLocation.Query or ParameterLocation.Header)) continue;
+            if (p.In is not (ParameterLocation.Path or ParameterLocation.Query or ParameterLocation.Header))
+            {
+                continue;
+            }
+
             var schema = OpenApiSchemaConverter.ToJsonObject(p.Schema, doc);
-            if (!string.IsNullOrEmpty(p.Description)) schema["description"] = p.Description;
+            if (!string.IsNullOrEmpty(p.Description))
+            {
+                schema["description"] = p.Description;
+            }
+
             props[p.Name] = schema;
-            if (p.Required || p.In == ParameterLocation.Path) required.Add(p.Name);
-            if (p.In == ParameterLocation.Header) (headerFields ??= new List<string>()).Add(p.Name);
+            if (p.Required || p.In == ParameterLocation.Path)
+            {
+                required.Add(p.Name);
+            }
+
+            if (p.In == ParameterLocation.Header)
+            {
+                (headerFields ??= []).Add(p.Name);
+            }
         }
 
         var template = new HttpCallTemplate
@@ -86,13 +105,20 @@ public static class OpenApiToUtcpConverter
         {
             var key = content.ContainsKey("application/json") ? "application/json" : content.Keys.First();
             props["body"] = OpenApiSchemaConverter.ToJsonObject(content[key].Schema, doc);
-            if (op.RequestBody.Required) required.Add("body");
+            if (op.RequestBody.Required)
+            {
+                required.Add("body");
+            }
+
             template.BodyField = "body";
             template.ContentType = key;
         }
 
         var inputs = new JsonObject { ["type"] = "object", ["properties"] = props };
-        if (required.Count > 0) inputs["required"] = required;
+        if (required.Count > 0)
+        {
+            inputs["required"] = required;
+        }
 
         var outputs = new JsonObject { ["type"] = "object" };
         var resp = op.Responses.TryGetValue("200", out var r200)
@@ -101,7 +127,10 @@ public static class OpenApiToUtcpConverter
         if (resp?.Content is { Count: > 0 } rc)
         {
             var rk = rc.ContainsKey("application/json") ? "application/json" : rc.Keys.First();
-            if (rc[rk].Schema is { } s) outputs = OpenApiSchemaConverter.ToJsonObject(s, doc);
+            if (rc[rk].Schema is { } s)
+            {
+                outputs = OpenApiSchemaConverter.ToJsonObject(s, doc);
+            }
         }
 
         template.Auth = BuildAuth(doc, op);
@@ -144,27 +173,42 @@ public static class OpenApiToUtcpConverter
             var real = scheme;
             var id = scheme.Reference?.Id;
             if (id is not null && doc.Components?.SecuritySchemes.TryGetValue(id, out var found) == true)
+            {
                 real = found;
-            if (id is null) continue;
+            }
+
+            if (id is null)
+            {
+                continue;
+            }
+
             var v = VarPrefix(id);
-            if (real.Type == SecuritySchemeType.Http &&
-                string.Equals(real.Scheme, "bearer", StringComparison.OrdinalIgnoreCase))
-                return new ApiKeyAuth { ApiKey = $"Bearer ${{{v}_TOKEN}}", VarName = "Authorization" };
-            if (real.Type == SecuritySchemeType.Http &&
-                string.Equals(real.Scheme, "basic", StringComparison.OrdinalIgnoreCase))
-                return new BasicAuth { Username = $"${{{v}_USERNAME}}", Password = $"${{{v}_PASSWORD}}" };
-            if (real.Type == SecuritySchemeType.ApiKey && !string.IsNullOrEmpty(real.Name))
-                return new ApiKeyAuth
-                {
-                    ApiKey = $"${{{v}_API_KEY}}",
-                    VarName = real.Name,
-                    Location = real.In switch
+            switch (real.Type)
+            {
+                case SecuritySchemeType.Http when
+                    string.Equals(real.Scheme, "bearer", StringComparison.OrdinalIgnoreCase):
+                    return new ApiKeyAuth { ApiKey = $"Bearer ${{{v}_TOKEN}}", VarName = "Authorization" };
+                case SecuritySchemeType.Http when
+                    string.Equals(real.Scheme, "basic", StringComparison.OrdinalIgnoreCase):
+                    return new BasicAuth { Username = $"${{{v}_USERNAME}}", Password = $"${{{v}_PASSWORD}}" };
+                case SecuritySchemeType.ApiKey when !string.IsNullOrEmpty(real.Name):
+                    return new ApiKeyAuth
                     {
-                        ParameterLocation.Query => "query",
-                        ParameterLocation.Cookie => "cookie",
-                        _ => "header"
-                    }
-                };
+                        ApiKey = $"${{{v}_API_KEY}}",
+                        VarName = real.Name,
+                        Location = real.In switch
+                        {
+                            ParameterLocation.Query => "query",
+                            ParameterLocation.Cookie => "cookie",
+                            _ => "header"
+                        }
+                    };
+                case SecuritySchemeType.OAuth2:
+                case SecuritySchemeType.OpenIdConnect:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
         return null;

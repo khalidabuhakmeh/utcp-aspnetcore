@@ -5,16 +5,37 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <PackageId>Utcp.AspNetCore</PackageId>
+    <Version Condition="'$(Version)' == ''">0.1.0</Version>
+    <Authors>Khalid Abuhakmeh</Authors>
+    <Description>Publishes a UTCP (Universal Tool Calling Protocol) v1.1 manual at GET /utcp, built automatically from your ASP.NET Core OpenAPI document so AI agents can discover and call your HTTP endpoints.</Description>
+    <PackageTags>utcp;openapi;aspnetcore;ai;agents;tools</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/khalidabuhakmeh/utcp-aspnetcore</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/khalidabuhakmeh/utcp-aspnetcore</PackageProjectUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EnablePackageValidation>true</EnablePackageValidation>
   </PropertyGroup>
 
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App"/>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.*" />
-    <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.*" />
-    <PackageReference Include="JetBrains.Annotations" Version="*" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.*"/>
+    <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.*"/>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all"/>
+    <PackageReference Include="JetBrains.Annotations" Version="*" PrivateAssets="all"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>
