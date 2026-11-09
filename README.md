@@ -113,4 +113,9 @@ Settings live in `.editorconfig` and the team-shared `utcp-library.sln.DotSettin
 
 ## Releasing
 
-Push a tag like `v0.2.0`. The release workflow builds, tests, packs with the version taken from the tag, pushes to NuGet, and creates a GitHub release with the `.nupkg` attached. Requires the `NUGET_API_KEY` repository secret.
+Push a tag like `v0.2.0`. The release workflow builds, tests, packs with the version taken from the tag, pushes to NuGet, and creates a GitHub release with the `.nupkg` attached.
+
+Publishing uses [NuGet Trusted Publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing) (GitHub OIDC via the `NuGet/login` action) — no long-lived API key. One-time setup:
+
+1. On nuget.org → account → **Trusted Publishing**, add a policy for repository `khalidabuhakmeh/utcp-aspnetcore`, workflow file `release.yml`.
+2. Set the `NUGET_USER` repository secret to the nuget.org username that owns the policy.
