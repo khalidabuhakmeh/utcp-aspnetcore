@@ -48,7 +48,8 @@ p{margin:.65rem 0 1rem}
 pre{position:relative;background:var(--code);color:var(--codefg);border:1px solid var(--code-border);border-radius:10px;padding:1rem 1.1rem;overflow-x:auto;font-size:.85rem;line-height:1.55;scrollbar-width:thin;scrollbar-color:var(--tok-m) transparent}
 pre::-webkit-scrollbar{height:8px}
 pre::-webkit-scrollbar-thumb{background:var(--code-border);border-radius:4px}
-pre[data-lang]::before{content:attr(data-lang);position:absolute;top:.55rem;right:3.4rem;font:600 .66rem/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--tok-m)}
+pre[data-lang]{padding-top:2.2rem}
+pre[data-lang]::before{content:attr(data-lang);position:absolute;top:.6rem;left:1.1rem;font:600 .66rem/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--tok-m)}
 code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em;font-variant-ligatures:none}
 :not(pre)>code{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:.05em .35em;white-space:nowrap}
 pre code{font-size:inherit}
@@ -88,7 +89,7 @@ footer a:hover{color:var(--accent-fg)}
 <a href="https://www.nuget.org/packages/Utcp.AspNetCore">NuGet</a>
 <a href="https://www.utcp.io/">utcp.io</a>
 </div>
-<pre data-lang="sh"><code>dotnet <span class="tok-k">add package</span> Utcp.AspNetCore</code></pre>
+<pre data-lang="shell"><code>dotnet <span class="tok-k">add package</span> Utcp.AspNetCore</code></pre>
 </div></header>
 
 <main>
@@ -100,9 +101,9 @@ footer a:hover{color:var(--accent-fg)}
 <section id="quickstart">
 <h2>Quickstart</h2>
 <h3>1. Install</h3>
-<pre data-lang="sh"><code>dotnet <span class="tok-k">add package</span> Utcp.AspNetCore</code></pre>
+<pre data-lang="shell"><code>dotnet <span class="tok-k">add package</span> Utcp.AspNetCore</code></pre>
 <h3>2. Wire it up</h3>
-<pre data-lang="csharp"><code><span class="tok-k">using</span> <span class="tok-t">Utcp.AspNetCore</span>;
+<pre data-lang="C#"><code><span class="tok-k">using</span> <span class="tok-t">Utcp.AspNetCore</span>;
 
 <span class="tok-k">var</span> builder = <span class="tok-t">WebApplication</span>.CreateBuilder(args);
 
@@ -116,7 +117,7 @@ app.MapUtcp(<span class="tok-s">"/utcp"</span>);            <span class="tok-c">
 app.Run();</code></pre>
 <p>Set an <code>operationId</code> on each endpoint (for example <code>.WithName("GetWeather")</code>). Operations without one are skipped. The <code>/utcp</code> endpoint is excluded from the OpenAPI document.</p>
 <h3>3. Fetch the manual</h3>
-<pre data-lang="sh"><code>curl <span class="tok-m">-s</span> <span class="tok-s">http://localhost:5080/utcp</span></code></pre>
+<pre data-lang="shell"><code>curl <span class="tok-m">-s</span> <span class="tok-s">http://localhost:5080/utcp</span></code></pre>
 <p>Trimmed example response:</p>
 <pre data-lang="json"><code>{
   <span class="tok-p">"manual_version"</span>: <span class="tok-s">"1.0.0"</span>,
@@ -205,7 +206,7 @@ app.Run();</code></pre>
 <h2>Securing /utcp &amp; security notes</h2>
 <ul>
 <li><code>/utcp</code> is anonymous by default and lists all documented operations, including secured ones. If your API surface is sensitive, protect it:
-<pre data-lang="csharp"><code>app.MapUtcp(<span class="tok-s">"/utcp"</span>).RequireAuthorization();</code></pre></li>
+<pre data-lang="C#"><code>app.MapUtcp(<span class="tok-s">"/utcp"</span>).RequireAuthorization();</code></pre></li>
 <li>The manual never contains real tokens. Secured tools emit placeholders such as <code>Bearer ${BEARER_TOKEN}</code> for the agent to substitute.</li>
 <li>Tool URLs use the OpenAPI document's <code>servers[0].Url</code> when absolute; otherwise they reflect the request's <code>Host</code> header. Behind proxies or on the open internet, add a server entry via a document transformer that sets <code>document.Servers</code>, so an attacker-controlled Host header can't be reflected into the manual.</li>
 </ul>
