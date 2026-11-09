@@ -1,0 +1,20 @@
+@host = http://localhost:5080
+
+### UTCP manual
+GET {{host}}/utcp
+
+### OpenAPI document
+GET {{host}}/openapi/v1.json
+
+### Weather
+GET {{host}}/weather/Seattle?days=3
+
+### Create order
+POST {{host}}/orders
+Content-Type: application/json
+
+{ "product": "Widget", "quantity": 2 }
+
+### Current user (requires bearer token)
+GET {{host}}/me
+Authorization: Bearer {{token}}

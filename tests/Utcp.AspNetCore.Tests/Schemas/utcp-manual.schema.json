@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/utcp-manual.schema.json",
+  "type": "object",
+  "required": ["manual_version", "utcp_version", "tools"],
+  "additionalProperties": false,
+  "properties": {
+    "manual_version": { "type": "string" },
+    "utcp_version": { "type": "string" },
+    "tools": { "type": "array", "items": { "$ref": "#/$defs/tool" } }
+  },
+  "$defs": {
+    "tool": {
+      "type": "object",
+      "required": ["name", "description", "inputs", "outputs", "tool_call_template"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+$" },
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "inputs": { "$ref": "#/$defs/jsonSchemaObject" },
+        "outputs": { "$ref": "#/$defs/jsonSchemaObject" },
+        "tool_call_template": { "$ref": "#/$defs/httpCallTemplate" }
+      }
+    },
+    "httpCallTemplate": {
+      "type": "object",
+      "required": ["call_template_type", "url", "http_method"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "call_template_type": { "const": "http" },
+        "url": { "type": "string", "pattern": "^https?://" },
+        "http_method": { "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"] },
+        "content_type": { "type": "string" },
+        "body_field": { "type": "string" },
+        "header_fields": { "type": "array", "items": { "type": "string" } },
+        "auth": { "$ref": "#/$defs/apiKeyAuth" }
+      }
+    },
+    "apiKeyAuth": {
+      "type": "object",
+      "required": ["auth_type", "api_key", "var_name", "location"],
+      "additionalProperties": false,
+      "properties": {
+        "auth_type": { "const": "api_key" },
+        "api_key": { "type": "string" },
+        "var_name": { "type": "string" },
+        "location": { "enum": ["header", "query", "cookie"] }
+      }
+    },
+    "jsonSchemaObject": { "type": "object" }
+  }
+}
