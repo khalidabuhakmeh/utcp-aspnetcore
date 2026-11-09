@@ -5,55 +5,90 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Utcp.AspNetCore: Getting Started</title>
 <meta name="description" content="Publish a UTCP manual for AI agents straight from your ASP.NET Core OpenAPI document.">
+<link rel="icon" type="image/png" href="icon.png">
 <style>
-:root{--bg:#fff;--fg:#1c2230;--muted:#5b6475;--accent:#4f46e5;--card:#f5f6fa;--border:#e1e4ec;--code:#0f172a;--codefg:#e2e8f0}
-@media (prefers-color-scheme:dark){:root{--bg:#0e1117;--fg:#e6e9f0;--muted:#9aa4b8;--accent:#8b8bff;--card:#161b24;--border:#262d3a;--code:#0a0d13;--codefg:#e2e8f0}}
+:root{
+  --bg:#fff;--fg:#1c2230;--muted:#505a6e;--accent:#4f46e5;--accent-fg:#4338ca;
+  --card:#f5f6fa;--border:#e1e4ec;
+  --code:#0f1526;--codefg:#dce3f2;--code-border:#1d2640;
+  --tok-k:#a5b4fc;--tok-s:#8ee6a8;--tok-n:#f2a9a9;--tok-c:#6b7a99;--tok-t:#7cc8f2;--tok-p:#7cc8f2;--tok-m:#8fa3c4;
+  --warn-bg:#fdf6e7;--warn-border:#ecd9ac;--warn-fg:#6b5014;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0e1117;--fg:#e6e9f0;--muted:#9aa4b8;--accent:#8b8bff;--accent-fg:#a5a5ff;
+  --card:#161b24;--border:#262d3a;
+  --code:#0a0e1a;--codefg:#dce3f2;--code-border:#1c2334;
+  --warn-bg:#211a0b;--warn-border:#4a3a14;--warn-fg:#e4c46f;
+}}
 *{box-sizing:border-box}
+::selection{background:var(--accent);color:#fff}
 html{scroll-behavior:smooth;scroll-padding-top:4.5rem}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-rendering:optimizeLegibility}
+a{color:var(--accent-fg);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{text-decoration-thickness:2px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 nav{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
-nav div{max-width:60rem;margin:auto;padding:.7rem 1.25rem;display:flex;gap:1.1rem;flex-wrap:wrap;align-items:center;font-size:.9rem}
-nav b{margin-right:auto}
-a{color:var(--accent)}
-nav a{text-decoration:none;color:var(--muted)}nav a:hover{color:var(--accent)}
+nav>div{max-width:60rem;margin:auto;padding:.6rem 1.25rem;display:flex;gap:1.1rem;flex-wrap:wrap;align-items:center;font-size:.9rem}
+.brand{margin-right:auto;display:flex;align-items:center;gap:.55rem;font-weight:600;color:var(--fg);text-decoration:none}
+.brand img{width:22px;height:22px;border-radius:5px;display:block}
+nav a:not(.brand){text-decoration:none;color:var(--muted)}
+nav a:not(.brand):hover{color:var(--accent-fg)}
 main,footer,header>div{max-width:72ch;margin:auto;padding:0 1.25rem}
-header{padding:4rem 0 1.5rem;border-bottom:1px solid var(--border)}
-h1{font-size:2.6rem;line-height:1.15;margin:0 0 .5rem}
-.lead{font-size:1.2rem;color:var(--muted);margin:0 0 1.25rem}
-.links{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.25rem}
-.links a{border:1px solid var(--border);background:var(--card);border-radius:999px;padding:.25rem .9rem;font-size:.85rem;text-decoration:none;color:var(--fg)}
-.links a:hover{border-color:var(--accent)}
-h2{margin-top:3rem;font-size:1.6rem;border-bottom:1px solid var(--border);padding-bottom:.3rem}
-h3{margin-top:1.8rem}
-pre{position:relative;background:var(--code);color:var(--codefg);border-radius:10px;padding:1rem 1.1rem;overflow-x:auto;font-size:.85rem;line-height:1.5}
-code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}
-:not(pre)>code{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:.05em .35em}
+header{padding:3.5rem 0 1.75rem;border-bottom:1px solid var(--border)}
+.hero{display:flex;align-items:flex-start;gap:1.1rem}
+.hero img{width:56px;height:56px;border-radius:13px;flex:none;margin-top:.35rem;box-shadow:0 4px 14px -6px rgba(81,43,212,.55)}
+h1{font-size:2.5rem;line-height:1.12;letter-spacing:-.02em;margin:0 0 .4rem;text-wrap:balance}
+.lead{font-size:1.18rem;color:var(--muted);margin:0 0 1.25rem;text-wrap:pretty}
+.links{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.3rem}
+.links a{border:1px solid var(--border);background:var(--card);border-radius:999px;padding:.28rem .95rem;font-size:.85rem;text-decoration:none;color:var(--fg)}
+.links a:hover{border-color:var(--accent);color:var(--accent-fg)}
+h2{margin:3.2rem 0 .9rem;font-size:1.55rem;letter-spacing:-.015em;border-bottom:1px solid var(--border);padding-bottom:.35rem}
+h3{margin:2rem 0 .6rem;font-size:1.08rem}
+p{margin:.65rem 0 1rem}
+pre{position:relative;background:var(--code);color:var(--codefg);border:1px solid var(--code-border);border-radius:10px;padding:1rem 1.1rem;overflow-x:auto;font-size:.85rem;line-height:1.55;scrollbar-width:thin;scrollbar-color:var(--tok-m) transparent}
+pre::-webkit-scrollbar{height:8px}
+pre::-webkit-scrollbar-thumb{background:var(--code-border);border-radius:4px}
+pre[data-lang]::before{content:attr(data-lang);position:absolute;top:.55rem;right:3.4rem;font:600 .66rem/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--tok-m)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em;font-variant-ligatures:none}
+:not(pre)>code{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:.05em .35em;white-space:nowrap}
 pre code{font-size:inherit}
-.copy{position:absolute;top:.5rem;right:.5rem;font:inherit;font-size:.72rem;background:#ffffff1a;color:var(--codefg);border:1px solid #ffffff33;border-radius:6px;padding:.15rem .5rem;cursor:pointer}
-.copy:hover{background:#ffffff33}
+.tok-k{color:var(--tok-k)}.tok-s{color:var(--tok-s)}.tok-n{color:var(--tok-n)}.tok-c{color:var(--tok-c);font-style:italic}.tok-t{color:var(--tok-t)}.tok-p{color:var(--tok-p)}.tok-m{color:var(--tok-m)}
+.copy{position:absolute;top:.5rem;right:.5rem;font:inherit;font-size:.72rem;background:#ffffff14;color:var(--codefg);border:1px solid #ffffff2e;border-radius:6px;padding:.18rem .55rem;cursor:pointer;transition:background .15s ease-out}
+.copy:hover{background:#ffffff2e}
+.copy:focus-visible{outline-color:#fff}
 .tw{overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:.88rem}
+table{border-collapse:collapse;width:100%;font-size:.88rem;font-variant-numeric:tabular-nums}
 th,td{text-align:left;vertical-align:top;border:1px solid var(--border);padding:.5rem .7rem}
 th{background:var(--card)}
-.warn{border-left:4px solid #f59e0b;background:var(--card);padding:.6rem 1rem;border-radius:0 8px 8px 0}
+.warn{display:flex;gap:.6rem;align-items:flex-start;background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn-fg);padding:.65rem .9rem;border-radius:8px;font-size:.92rem}
+.warn svg{flex:none;width:16px;height:16px;margin-top:.22rem}
+ul{padding-left:1.3rem}
+li{margin:.4rem 0}
 footer{margin-top:4rem;padding-top:1.5rem;padding-bottom:3rem;border-top:1px solid var(--border);color:var(--muted);font-size:.9rem}
+footer a{color:var(--muted)}
+footer a:hover{color:var(--accent-fg)}
 </style>
 </head>
 <body>
 <nav><div>
-<b>Utcp.AspNetCore</b>
+<a class="brand" href="#"><img src="icon-64.png" alt="" width="22" height="22">Utcp.AspNetCore</a>
 <a href="#what">What is UTCP?</a><a href="#quickstart">Quickstart</a><a href="#mapping">Mapping</a><a href="#auth">Auth</a><a href="#options">Options</a><a href="#security">Security</a>
 </div></nav>
 
 <header><div>
+<div class="hero">
+<img src="icon.png" alt="Utcp.AspNetCore icon" width="56" height="56">
+<div>
 <h1>Utcp.AspNetCore</h1>
 <p class="lead">Publish a UTCP manual for AI agents straight from your ASP.NET Core OpenAPI document.</p>
+</div>
+</div>
 <div class="links">
 <a href="https://github.com/khalidabuhakmeh/utcp-aspnetcore">GitHub</a>
 <a href="https://www.nuget.org/packages/Utcp.AspNetCore">NuGet</a>
 <a href="https://www.utcp.io/">utcp.io</a>
 </div>
-<pre><code>dotnet add package Utcp.AspNetCore</code></pre>
+<pre data-lang="sh"><code>dotnet <span class="tok-k">add package</span> Utcp.AspNetCore</code></pre>
 </div></header>
 
 <main>
@@ -65,57 +100,57 @@ footer{margin-top:4rem;padding-top:1.5rem;padding-bottom:3rem;border-top:1px sol
 <section id="quickstart">
 <h2>Quickstart</h2>
 <h3>1. Install</h3>
-<pre><code>dotnet add package Utcp.AspNetCore</code></pre>
+<pre data-lang="sh"><code>dotnet <span class="tok-k">add package</span> Utcp.AspNetCore</code></pre>
 <h3>2. Wire it up</h3>
-<pre><code>using Utcp.AspNetCore;
+<pre data-lang="csharp"><code><span class="tok-k">using</span> <span class="tok-t">Utcp.AspNetCore</span>;
 
-var builder = WebApplication.CreateBuilder(args);
+<span class="tok-k">var</span> builder = <span class="tok-t">WebApplication</span>.CreateBuilder(args);
 
-builder.Services.AddOpenApi();   // required: Microsoft.AspNetCore.OpenApi
-builder.Services.AddUtcp();      // optionally: AddUtcp(o =&gt; o.DocumentName = "v2")
+builder.Services.AddOpenApi();   <span class="tok-c">// required: Microsoft.AspNetCore.OpenApi</span>
+builder.Services.AddUtcp();      <span class="tok-c">// optionally: AddUtcp(o =&gt; o.DocumentName = "v2")</span>
 
-var app = builder.Build();
+<span class="tok-k">var</span> app = builder.Build();
 
-app.MapUtcp("/utcp");            // returns an IEndpointConventionBuilder; chain .AllowAnonymous() etc.
+app.MapUtcp(<span class="tok-s">"/utcp"</span>);            <span class="tok-c">// returns an IEndpointConventionBuilder; chain .AllowAnonymous() etc.</span>
 
 app.Run();</code></pre>
 <p>Set an <code>operationId</code> on each endpoint (for example <code>.WithName("GetWeather")</code>). Operations without one are skipped. The <code>/utcp</code> endpoint is excluded from the OpenAPI document.</p>
 <h3>3. Fetch the manual</h3>
-<pre><code>curl -s http://localhost:5080/utcp</code></pre>
+<pre data-lang="sh"><code>curl <span class="tok-m">-s</span> <span class="tok-s">http://localhost:5080/utcp</span></code></pre>
 <p>Trimmed example response:</p>
-<pre><code>{
-  "manual_version": "1.0.0",
-  "utcp_version": "1.0.1",
-  "tools": [
+<pre data-lang="json"><code>{
+  <span class="tok-p">"manual_version"</span>: <span class="tok-s">"1.0.0"</span>,
+  <span class="tok-p">"utcp_version"</span>: <span class="tok-s">"1.0.1"</span>,
+  <span class="tok-p">"tools"</span>: [
     {
-      "name": "GetWeather",
-      "description": "Get the forecast for a city",
-      "inputs": {
-        "type": "object",
-        "properties": {
-          "city": { "type": "string" },
-          "days": { "type": "integer" }
+      <span class="tok-p">"name"</span>: <span class="tok-s">"GetWeather"</span>,
+      <span class="tok-p">"description"</span>: <span class="tok-s">"Get the forecast for a city"</span>,
+      <span class="tok-p">"inputs"</span>: {
+        <span class="tok-p">"type"</span>: <span class="tok-s">"object"</span>,
+        <span class="tok-p">"properties"</span>: {
+          <span class="tok-p">"city"</span>: { <span class="tok-p">"type"</span>: <span class="tok-s">"string"</span> },
+          <span class="tok-p">"days"</span>: { <span class="tok-p">"type"</span>: <span class="tok-s">"integer"</span> }
         },
-        "required": ["city"]
+        <span class="tok-p">"required"</span>: [<span class="tok-s">"city"</span>]
       },
-      "tool_call_template": {
-        "call_template_type": "http",
-        "http_method": "GET",
-        "url": "http://localhost:5080/weather/{city}"
+      <span class="tok-p">"tool_call_template"</span>: {
+        <span class="tok-p">"call_template_type"</span>: <span class="tok-s">"http"</span>,
+        <span class="tok-p">"http_method"</span>: <span class="tok-s">"GET"</span>,
+        <span class="tok-p">"url"</span>: <span class="tok-s">"http://localhost:5080/weather/{city}"</span>
       }
     },
     {
-      "name": "GetCurrentUser",
-      "description": "Get the signed-in user",
-      "tool_call_template": {
-        "call_template_type": "http",
-        "http_method": "GET",
-        "url": "http://localhost:5080/me",
-        "auth": {
-          "auth_type": "api_key",
-          "api_key": "Bearer ${BEARER_TOKEN}",
-          "var_name": "Authorization",
-          "location": "header"
+      <span class="tok-p">"name"</span>: <span class="tok-s">"GetCurrentUser"</span>,
+      <span class="tok-p">"description"</span>: <span class="tok-s">"Get the signed-in user"</span>,
+      <span class="tok-p">"tool_call_template"</span>: {
+        <span class="tok-p">"call_template_type"</span>: <span class="tok-s">"http"</span>,
+        <span class="tok-p">"http_method"</span>: <span class="tok-s">"GET"</span>,
+        <span class="tok-p">"url"</span>: <span class="tok-s">"http://localhost:5080/me"</span>,
+        <span class="tok-p">"auth"</span>: {
+          <span class="tok-p">"auth_type"</span>: <span class="tok-s">"api_key"</span>,
+          <span class="tok-p">"api_key"</span>: <span class="tok-s">"Bearer ${BEARER_TOKEN}"</span>,
+          <span class="tok-p">"var_name"</span>: <span class="tok-s">"Authorization"</span>,
+          <span class="tok-p">"location"</span>: <span class="tok-s">"header"</span>
         }
       }
     }
@@ -145,14 +180,14 @@ app.Run();</code></pre>
 <h2>Auth schemes</h2>
 <p>Security schemes are read from the operation, else the document; first match wins. <code>&lt;SCHEMEID&gt;</code> is the scheme's component id, uppercased with non-alphanumerics replaced by <code>_</code> (id <code>Bearer</code> → <code>BEARER_TOKEN</code>). Agents substitute the placeholders; the manual never contains real secrets.</p>
 <h3>HTTP bearer</h3>
-<pre><code>{ "auth_type": "api_key", "api_key": "Bearer ${&lt;SCHEMEID&gt;_TOKEN}", "var_name": "Authorization", "location": "header" }</code></pre>
+<pre data-lang="json"><code>{ <span class="tok-p">"auth_type"</span>: <span class="tok-s">"api_key"</span>, <span class="tok-p">"api_key"</span>: <span class="tok-s">"Bearer ${&lt;SCHEMEID&gt;_TOKEN}"</span>, <span class="tok-p">"var_name"</span>: <span class="tok-s">"Authorization"</span>, <span class="tok-p">"location"</span>: <span class="tok-s">"header"</span> }</code></pre>
 <h3>API key in a header</h3>
-<pre><code>{ "auth_type": "api_key", "api_key": "${&lt;SCHEMEID&gt;_API_KEY}", "var_name": "&lt;scheme Name&gt;", "location": "header" }</code></pre>
+<pre data-lang="json"><code>{ <span class="tok-p">"auth_type"</span>: <span class="tok-s">"api_key"</span>, <span class="tok-p">"api_key"</span>: <span class="tok-s">"${&lt;SCHEMEID&gt;_API_KEY}"</span>, <span class="tok-p">"var_name"</span>: <span class="tok-s">"&lt;scheme Name&gt;"</span>, <span class="tok-p">"location"</span>: <span class="tok-s">"header"</span> }</code></pre>
 <h3>API key in the query string</h3>
-<pre><code>{ "auth_type": "api_key", "api_key": "${&lt;SCHEMEID&gt;_API_KEY}", "var_name": "&lt;scheme Name&gt;", "location": "query" }</code></pre>
-<p class="warn">Query strings commonly end up in access logs and proxies. Prefer header-based keys in real APIs.</p>
+<pre data-lang="json"><code>{ <span class="tok-p">"auth_type"</span>: <span class="tok-s">"api_key"</span>, <span class="tok-p">"api_key"</span>: <span class="tok-s">"${&lt;SCHEMEID&gt;_API_KEY}"</span>, <span class="tok-p">"var_name"</span>: <span class="tok-s">"&lt;scheme Name&gt;"</span>, <span class="tok-p">"location"</span>: <span class="tok-s">"query"</span> }</code></pre>
+<p class="warn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8 15 14H1L8 1.8Z"/><path d="M8 6.5v3.2"/><path d="M8 11.8v.2"/></svg><span>Query strings commonly end up in access logs and proxies. Prefer header-based keys in real APIs.</span></p>
 <h3>HTTP basic</h3>
-<pre><code>{ "auth_type": "basic", "username": "${&lt;SCHEMEID&gt;_USERNAME}", "password": "${&lt;SCHEMEID&gt;_PASSWORD}" }</code></pre>
+<pre data-lang="json"><code>{ <span class="tok-p">"auth_type"</span>: <span class="tok-s">"basic"</span>, <span class="tok-p">"username"</span>: <span class="tok-s">"${&lt;SCHEMEID&gt;_USERNAME}"</span>, <span class="tok-p">"password"</span>: <span class="tok-s">"${&lt;SCHEMEID&gt;_PASSWORD}"</span> }</code></pre>
 <p>OAuth2 and other schemes are ignored.</p>
 </section>
 
@@ -170,7 +205,7 @@ app.Run();</code></pre>
 <h2>Securing /utcp &amp; security notes</h2>
 <ul>
 <li><code>/utcp</code> is anonymous by default and lists all documented operations, including secured ones. If your API surface is sensitive, protect it:
-<pre><code>app.MapUtcp("/utcp").RequireAuthorization();</code></pre></li>
+<pre data-lang="csharp"><code>app.MapUtcp(<span class="tok-s">"/utcp"</span>).RequireAuthorization();</code></pre></li>
 <li>The manual never contains real tokens. Secured tools emit placeholders such as <code>Bearer ${BEARER_TOKEN}</code> for the agent to substitute.</li>
 <li>Tool URLs use the OpenAPI document's <code>servers[0].Url</code> when absolute; otherwise they reflect the request's <code>Host</code> header. Behind proxies or on the open internet, add a server entry via a document transformer that sets <code>document.Servers</code>, so an attacker-controlled Host header can't be reflected into the manual.</li>
 </ul>
@@ -192,7 +227,8 @@ MIT licensed ·
 
 <script>
 document.querySelectorAll('pre').forEach(function(p){
-  var b=document.createElement('button');b.className='copy';b.textContent='Copy';
+  var b=document.createElement('button');b.className='copy';b.type='button';b.textContent='Copy';
+  b.setAttribute('aria-label','Copy code to clipboard');
   b.onclick=function(){navigator.clipboard.writeText(p.querySelector('code').innerText).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1500)})};
   p.appendChild(b);
 });
