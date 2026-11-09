@@ -35,7 +35,7 @@
         "content_type": { "type": "string" },
         "body_field": { "type": "string" },
         "header_fields": { "type": "array", "items": { "type": "string" } },
-        "auth": { "$ref": "#/$defs/apiKeyAuth" }
+        "auth": { "oneOf": [{ "$ref": "#/$defs/apiKeyAuth" }, { "$ref": "#/$defs/basicAuth" }] }
       }
     },
     "apiKeyAuth": {
@@ -47,6 +47,16 @@
         "api_key": { "type": "string" },
         "var_name": { "type": "string" },
         "location": { "enum": ["header", "query", "cookie"] }
+      }
+    },
+    "basicAuth": {
+      "type": "object",
+      "required": ["auth_type", "username", "password"],
+      "additionalProperties": false,
+      "properties": {
+        "auth_type": { "const": "basic" },
+        "username": { "type": "string" },
+        "password": { "type": "string" }
       }
     },
     "jsonSchemaObject": { "type": "object" }

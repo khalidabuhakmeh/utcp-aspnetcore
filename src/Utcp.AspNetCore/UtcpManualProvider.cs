@@ -20,7 +20,7 @@ internal sealed class UtcpManualProvider
     {
         var doc = await GetDocumentAsync(context.RequestServices);
         var req = context.Request;
-        var baseUrl = _options.BaseUrl ?? $"{req.Scheme}://{req.Host}{req.PathBase}";
+        var baseUrl = $"{req.Scheme}://{req.Host}{req.PathBase}";
         return OpenApiToUtcpConverter.Convert(doc, baseUrl, _options);
     }
 

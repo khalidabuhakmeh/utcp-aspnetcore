@@ -36,7 +36,7 @@ public class UtcpEndpointTests(WebApplicationFactory<Program> factory) : IClassF
         var auth = Tool(m, "GetCurrentUser")["tool_call_template"]!["auth"]!.AsObject();
         Assert.Equal(4, auth.Count);
         Assert.Equal("api_key", (string)auth["auth_type"]!);
-        Assert.Equal("Bearer ${API_TOKEN_VARNAME}", (string)auth["api_key"]!);
+        Assert.Equal("Bearer ${BEARER_TOKEN}", (string)auth["api_key"]!);
         Assert.Equal("Authorization", (string)auth["var_name"]!);
         Assert.Equal("header", (string)auth["location"]!);
         foreach (var n in new[] { "GetWeather", "CreateOrder" })

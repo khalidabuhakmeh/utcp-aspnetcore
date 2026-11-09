@@ -16,8 +16,9 @@ public static class OpenApiToUtcpConverter
         _ => null,
     };
 
-    public static UtcpManual Convert(OpenApiDocument doc, string baseUrl, UtcpOptions options)
+    public static UtcpManual Convert(OpenApiDocument doc, string fallbackBaseUrl, UtcpOptions options)
     {
+        var baseUrl = ResolveBaseUrl(doc, fallbackBaseUrl);
         var manual = new UtcpManual { ManualVersion = options.ManualVersion };
         foreach (var (pathKey, item) in doc.Paths)
         {
@@ -25,14 +26,14 @@ public static class OpenApiToUtcpConverter
             {
                 var method = MethodName(opType);
                 if (method is null || string.IsNullOrEmpty(op.OperationId)) continue;
-                manual.Tools.Add(BuildTool(doc, pathKey, item, method, op, baseUrl, options));
+                manual.Tools.Add(BuildTool(doc, pathKey, item, method, op, baseUrl));
             }
         }
         return manual;
     }
 
     private static UtcpTool BuildTool(OpenApiDocument doc, string pathKey, OpenApiPathItem item, string method,
-        OpenApiOperation op, string baseUrl, UtcpOptions o)
+        OpenApiOperation op, string baseUrl)
     {
         var props = new JsonObject();
         var required = new JsonArray();
@@ -80,7 +81,7 @@ public static class OpenApiToUtcpConverter
             if (rc[rk].Schema is { } s) outputs = OpenApiSchemaConverter.ToJsonObject(s, doc);
         }
 
-        template.Auth = BuildAuth(doc, op, o);
+        template.Auth = BuildAuth(doc, op);
 
         return new UtcpTool
         {
@@ -93,7 +94,22 @@ public static class OpenApiToUtcpConverter
         };
     }
 
-    private static ApiKeyAuth? BuildAuth(OpenApiDocument doc, OpenApiOperation op, UtcpOptions o)
+    private static string ResolveBaseUrl(OpenApiDocument doc, string fallback)
+    {
+        var url = doc.Servers?.FirstOrDefault()?.Url;
+        return !string.IsNullOrWhiteSpace(url) && Uri.TryCreate(url, UriKind.Absolute, out var u) &&
+               (u.Scheme == Uri.UriSchemeHttp || u.Scheme == Uri.UriSchemeHttps)
+            ? url
+            : fallback;
+    }
+
+    private static string VarPrefix(string id)
+    {
+        var chars = id.ToUpperInvariant().Select(ch => char.IsAsciiLetterOrDigit(ch) ? ch : '_').ToArray();
+        return new string(chars);
+    }
+
+    private static object? BuildAuth(OpenApiDocument doc, OpenApiOperation op)
     {
         IEnumerable<OpenApiSecurityRequirement> reqs =
             op.Security is { Count: > 0 } ? op.Security : doc.SecurityRequirements ?? new List<OpenApiSecurityRequirement>();
@@ -101,11 +117,29 @@ public static class OpenApiToUtcpConverter
             foreach (var scheme in req.Keys)
             {
                 var real = scheme;
-                if (scheme.Reference?.Id is { } id && doc.Components?.SecuritySchemes.TryGetValue(id, out var found) == true)
+                var id = scheme.Reference?.Id;
+                if (id is not null && doc.Components?.SecuritySchemes.TryGetValue(id, out var found) == true)
                     real = found;
+                if (id is null) continue;
+                var v = VarPrefix(id);
                 if (real.Type == SecuritySchemeType.Http &&
                     string.Equals(real.Scheme, "bearer", StringComparison.OrdinalIgnoreCase))
-                    return new ApiKeyAuth { ApiKey = $"Bearer ${{{o.TokenVariableName}}}", VarName = "Authorization" };
+                    return new ApiKeyAuth { ApiKey = $"Bearer ${{{v}_TOKEN}}", VarName = "Authorization" };
+                if (real.Type == SecuritySchemeType.Http &&
+                    string.Equals(real.Scheme, "basic", StringComparison.OrdinalIgnoreCase))
+                    return new BasicAuth { Username = $"${{{v}_USERNAME}}", Password = $"${{{v}_PASSWORD}}" };
+                if (real.Type == SecuritySchemeType.ApiKey && !string.IsNullOrEmpty(real.Name))
+                    return new ApiKeyAuth
+                    {
+                        ApiKey = $"${{{v}_API_KEY}}",
+                        VarName = real.Name,
+                        Location = real.In switch
+                        {
+                            ParameterLocation.Query => "query",
+                            ParameterLocation.Cookie => "cookie",
+                            _ => "header",
+                        },
+                    };
             }
         return null;
     }

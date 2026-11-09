@@ -9,5 +9,5 @@ public sealed class HttpCallTemplate
     public string ContentType { get; set; } = "application/json";
     public string? BodyField { get; set; }
     public List<string>? HeaderFields { get; set; }
-    public ApiKeyAuth? Auth { get; set; }
+    public object? Auth { get; set; }
 }
