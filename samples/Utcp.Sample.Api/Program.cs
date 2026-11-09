@@ -24,6 +24,7 @@ builder.Services.AddOpenApi(o =>
     o.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
     o.AddOperationTransformer<BearerOperationTransformer>();
 });
+builder.Services.AddControllers();
 builder.Services.AddUtcp();
 
 var app = builder.Build();
@@ -70,6 +71,7 @@ app.MapGet("/legacy/export", () => TypedResults.Ok(new { format = "csv", rows = 
     .WithName("GetLegacyExport").WithSummary("Legacy export (HTTP Basic)").WithTags("Legacy")
     .RequireAuthorization(DemoSchemes.Basic);
 
+app.MapControllers();
 app.MapUtcp();
 
 app.Run();

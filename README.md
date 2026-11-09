@@ -97,6 +97,53 @@ becomes this tool in the `/utcp` manual (actual output):
 
 The route's `{city}` stays a placeholder in the tool URL, the optional `days` query parameter becomes an optional input, and the `WeatherForecast[]` response type becomes the `outputs` schema. Add `.RequireAuthorization()` (with a matching OpenAPI security scheme) and the tool gains an `auth` block — see below.
 
+### MVC controllers work too
+
+Attribute-decorated MVC controllers map the same way. Call `AddControllers()` and `MapControllers()`, and the OpenAPI document (and so the manual) picks the actions up:
+
+```csharp
+[ApiController]
+[Route("products")]
+public class ProductsController : ControllerBase
+{
+    [HttpGet("{id:int}", Name = "GetProduct")]               // Name → operationId → tool name
+    [EndpointSummary("Get a product by id")]                 // → description
+    [Tags("Products")]                                       // → tags
+    [ProducesResponseType<Product>(StatusCodes.Status200OK)] // → outputs
+    public IActionResult GetProduct(int id, [FromQuery] bool includePricing = false) =>
+        Ok(new Product(id, $"Product {id}", includePricing ? 19.99m : null));
+}
+
+public record Product(int Id, string Name, decimal? Price);
+```
+
+becomes this tool (trimmed to name, description, tags, inputs and `tool_call_template`; actual output otherwise):
+
+```json
+{
+  "name": "GetProduct",
+  "description": "Get a product by id",
+  "tags": ["Products"],
+  "inputs": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "integer", "format": "int32" },
+      "includePricing": { "type": "boolean", "default": false }
+    },
+    "required": ["id"]
+  },
+  "tool_call_template": {
+    "name": "GetProduct",
+    "call_template_type": "http",
+    "url": "http://localhost:5080/products/{id}",
+    "http_method": "GET",
+    "content_type": "application/json"
+  }
+}
+```
+
+`[EndpointName("GetProduct")]` works as an alternative to `Name =` on the route attribute. The `outputs` schema (the `Product` record) is omitted from the JSON below for brevity.
+
 ### Mapping rules
 
 | OpenAPI | UTCP |
@@ -124,13 +171,14 @@ dotnet run --project samples/Utcp.Sample.Api
 curl -s http://localhost:5080/utcp
 ```
 
-The sample exposes six endpoints:
+The sample exposes seven endpoints:
 
 - `GET /weather/{city}?days=3` (`GetWeather`): path and query inputs.
 - `POST /orders` (`CreateOrder`): JSON body.
 - `GET /me` (`GetCurrentUser`): requires JWT bearer auth, so its tool includes the `auth` block.
 - `GET /admin/stats` (`GetAdminStats`): API key in the `X-Api-Key` header (scheme `ApiKeyHeader`).
 - `GET /reports` (`GetReports`): API key in the `api_key` query parameter (scheme `ApiKeyQuery`).
+- `GET /products/{id}?includePricing=true` (`GetProduct`): MVC controller action, path and query inputs.
 - `GET /legacy/export` (`GetLegacyExport`): HTTP Basic (scheme `Basic`).
 
 **Demo credentials** (sample only, bound from the `DemoAuth` configuration section): `appsettings.json` ships **empty values and the handlers fail closed** — secured endpoints reject everything until credentials are configured. `appsettings.Development.json` supplies dev-only values (API key `demo-key`; basic `demo` / `demo`), so they only work when `ASPNETCORE_ENVIRONMENT=Development` (the default for `dotnet run`). For anything else, supply your own via user-secrets or environment variables (e.g. `DemoAuth__ApiKey`). Example: `curl -H "X-Api-Key: demo-key" http://localhost:5080/admin/stats`.

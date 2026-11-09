@@ -30,11 +30,29 @@ public class UtcpEndpointTests(WebApplicationFactory<Program> factory) : IClassF
     {
         var m = await GetManual();
         var names = m["tools"]!.AsArray().Select(t => (string)t!["name"]!).ToHashSet();
-        Assert.Equal(6, m["tools"]!.AsArray().Count);
+        Assert.Equal(7, m["tools"]!.AsArray().Count);
         Assert.Equal(
             new HashSet<string>
-                { "GetWeather", "CreateOrder", "GetCurrentUser", "GetAdminStats", "GetReports", "GetLegacyExport" },
+                { "GetWeather", "CreateOrder", "GetCurrentUser", "GetAdminStats", "GetReports", "GetLegacyExport", "GetProduct" },
             names);
+    }
+
+    [Fact]
+    public async Task Controller_action_maps_to_tool()
+    {
+        var m = await GetManual();
+        var t = Tool(m, "GetProduct");
+        var tpl = t["tool_call_template"]!;
+        Assert.EndsWith("/products/{id}", (string)tpl["url"]!);
+        Assert.Equal("GET", (string)tpl["http_method"]!);
+        Assert.Equal("Get a product by id", (string)t["description"]!);
+        Assert.Equal(new[] { "Products" }, t["tags"]!.AsArray().Select(x => (string)x!).ToArray());
+        var props = t["inputs"]!["properties"]!;
+        Assert.Equal("integer", (string)props["id"]!["type"]!);
+        Assert.Equal("boolean", (string)props["includePricing"]!["type"]!);
+        var req = t["inputs"]!["required"]!.AsArray().Select(x => (string)x!).ToArray();
+        Assert.Contains("id", req);
+        Assert.DoesNotContain("includePricing", req);
     }
 
     [Fact]

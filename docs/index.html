@@ -157,7 +157,7 @@ app.Run();</code></pre>
     }
   ]
 }</code></pre>
-<p>The repo includes a sample with six endpoints — see <a href="#sample">Run the sample</a>.</p>
+<p>The repo includes a sample with seven endpoints — see <a href="#sample">Run the sample</a>.</p>
 </section>
 
 <section id="example">
@@ -205,6 +205,43 @@ app.Run();</code></pre>
   }
 }</code></pre>
 <p>The route's <code>{city}</code> stays a placeholder in the tool URL, the optional <code>days</code> query parameter becomes an optional input, and the <code>WeatherForecast[]</code> response type becomes the <code>outputs</code> schema. Add <code>.RequireAuthorization()</code> (with a matching OpenAPI security scheme) and the tool gains an <code>auth</code> block — see <a href="#auth">Auth schemes</a>.</p>
+<h3>MVC controllers work too</h3>
+<p>Attribute-decorated MVC controllers map the same way. Call <code>AddControllers()</code> and <code>MapControllers()</code>, and the OpenAPI document (and so the manual) picks the actions up:</p>
+<pre data-lang="C#"><code>[<span class="tok-t">ApiController</span>]
+[<span class="tok-t">Route</span>(<span class="tok-s">"products"</span>)]
+<span class="tok-k">public</span> <span class="tok-k">class</span> ProductsController : <span class="tok-t">ControllerBase</span>
+{
+    [<span class="tok-t">HttpGet</span>(<span class="tok-s">"{id:int}"</span>, Name = <span class="tok-s">"GetProduct"</span>)]               <span class="tok-c">// Name → operationId → tool name</span>
+    [<span class="tok-t">EndpointSummary</span>(<span class="tok-s">"Get a product by id"</span>)]                 <span class="tok-c">// → description</span>
+    [<span class="tok-t">Tags</span>(<span class="tok-s">"Products"</span>)]                                       <span class="tok-c">// → tags</span>
+    [<span class="tok-t">ProducesResponseType</span>&lt;<span class="tok-t">Product</span>&gt;(<span class="tok-t">StatusCodes</span>.Status200OK)] <span class="tok-c">// → outputs</span>
+    <span class="tok-k">public</span> <span class="tok-t">IActionResult</span> GetProduct(<span class="tok-k">int</span> id, [<span class="tok-t">FromQuery</span>] <span class="tok-k">bool</span> includePricing = <span class="tok-k">false</span>) =&gt;
+        Ok(new <span class="tok-t">Product</span>(id, $<span class="tok-s">"<span class="tok-t">Product</span> {id}"</span>, includePricing ? <span class="tok-n">19.99m</span> : <span class="tok-k">null</span>));
+}
+
+<span class="tok-k">public</span> <span class="tok-k">record</span> <span class="tok-t">Product</span>(<span class="tok-k">int</span> Id, <span class="tok-k">string</span> Name, <span class="tok-t">decimal</span>? Price);</code></pre>
+<p>becomes this tool (trimmed to name, description, tags, inputs and <code>tool_call_template</code>; actual output otherwise):</p>
+<pre data-lang="json"><code>{
+  <span class="tok-p">"name"</span>: <span class="tok-s">"GetProduct"</span>,
+  <span class="tok-p">"description"</span>: <span class="tok-s">"Get a product by id"</span>,
+  <span class="tok-p">"tags"</span>: [<span class="tok-s">"Products"</span>],
+  <span class="tok-p">"inputs"</span>: {
+    <span class="tok-p">"type"</span>: <span class="tok-s">"object"</span>,
+    <span class="tok-p">"properties"</span>: {
+      <span class="tok-p">"id"</span>: { <span class="tok-p">"type"</span>: <span class="tok-s">"integer"</span>, <span class="tok-p">"format"</span>: <span class="tok-s">"int32"</span> },
+      <span class="tok-p">"includePricing"</span>: { <span class="tok-p">"type"</span>: <span class="tok-s">"boolean"</span>, <span class="tok-p">"default"</span>: <span class="tok-k">false</span> }
+    },
+    <span class="tok-p">"required"</span>: [<span class="tok-s">"id"</span>]
+  },
+  <span class="tok-p">"tool_call_template"</span>: {
+    <span class="tok-p">"name"</span>: <span class="tok-s">"GetProduct"</span>,
+    <span class="tok-p">"call_template_type"</span>: <span class="tok-s">"http"</span>,
+    <span class="tok-p">"url"</span>: <span class="tok-s">"http://localhost:5080/products/{id}"</span>,
+    <span class="tok-p">"http_method"</span>: <span class="tok-s">"GET"</span>,
+    <span class="tok-p">"content_type"</span>: <span class="tok-s">"application/json"</span>
+  }
+}</code></pre>
+<p><code>[EndpointName("GetProduct")]</code> works as an alternative to <code>Name =</code> on the route attribute. The <code>outputs</code> schema (the <code>Product</code> record) is omitted from the JSON above for brevity.</p>
 </section>
 
 <section id="mapping">
@@ -243,13 +280,14 @@ app.Run();</code></pre>
 <h2>Run the sample</h2>
 <pre data-lang="shell"><code>dotnet run <span class="tok-m">--project</span> samples/Utcp.Sample.Api
 curl <span class="tok-m">-s</span> <span class="tok-s">http://localhost:5080/utcp</span></code></pre>
-<p>The sample exposes six endpoints:</p>
+<p>The sample exposes seven endpoints:</p>
 <ul>
 <li><code>GET /weather/{city}?days=3</code> (<code>GetWeather</code>): path and query inputs.</li>
 <li><code>POST /orders</code> (<code>CreateOrder</code>): JSON body.</li>
 <li><code>GET /me</code> (<code>GetCurrentUser</code>): requires JWT bearer auth, so its tool includes the <code>auth</code> block.</li>
 <li><code>GET /admin/stats</code> (<code>GetAdminStats</code>): API key in the <code>X-Api-Key</code> header (scheme <code>ApiKeyHeader</code>).</li>
 <li><code>GET /reports</code> (<code>GetReports</code>): API key in the <code>api_key</code> query parameter (scheme <code>ApiKeyQuery</code>).</li>
+<li><code>GET /products/{id}</code> (<code>GetProduct</code>): MVC controller action, path and query inputs.</li>
 <li><code>GET /legacy/export</code> (<code>GetLegacyExport</code>): HTTP Basic (scheme <code>Basic</code>).</li>
 </ul>
 <p><strong>Demo credentials</strong> (sample only, bound from the <code>DemoAuth</code> configuration section): <code>appsettings.json</code> ships <strong>empty values and the handlers fail closed</strong> — secured endpoints reject everything until credentials are configured. <code>appsettings.Development.json</code> supplies dev-only values (API key <code>demo-key</code>; basic <code>demo</code> / <code>demo</code>), so they only work when <code>ASPNETCORE_ENVIRONMENT=Development</code> (the default for <code>dotnet run</code>). For anything else, supply your own via user-secrets or environment variables (e.g. <code>DemoAuth__ApiKey</code>).</p>
