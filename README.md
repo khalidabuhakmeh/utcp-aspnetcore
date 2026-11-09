@@ -113,7 +113,7 @@ Settings live in `.editorconfig` and the team-shared `utcp-library.sln.DotSettin
 
 ## Releasing
 
-Push a tag like `v0.2.0`. The release workflow builds, tests, packs with the version taken from the tag, pushes to NuGet, and creates a GitHub release with the `.nupkg` attached.
+Push a bare version tag like `0.2.0` (prereleases like `0.2.0-preview.1` also work). The release workflow builds, tests, packs with the version taken from the tag, pushes to NuGet, and creates a GitHub release with the `.nupkg` attached.
 
 Publishing uses [NuGet Trusted Publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing) (GitHub OIDC via the `NuGet/login` action) — no long-lived API key. One-time setup:
 

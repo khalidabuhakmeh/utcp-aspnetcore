@@ -1,7 +1,9 @@
 name: Release
 on:
   push:
-    tags: ['v*']
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+-*" # prereleases, e.g. 0.2.0-preview.1
 permissions:
   contents: write
   id-token: write # GitHub OIDC token for NuGet Trusted Publishing
@@ -17,7 +19,7 @@ jobs:
       - run: dotnet test -c Release --no-build
       - name: Pack
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="$GITHUB_REF_NAME"
           dotnet pack src/Utcp.AspNetCore -c Release /p:Version=$VERSION /p:ContinuousIntegrationBuild=true -o out
       - name: NuGet login (OIDC -> temp API key)
         uses: NuGet/login@v1
