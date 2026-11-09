@@ -6,10 +6,18 @@ using Microsoft.OpenApi.Writers;
 
 namespace Utcp.AspNetCore;
 
+/// <summary>Converts OpenAPI schemas into self-contained JSON Schema objects for UTCP inputs/outputs.</summary>
 public static class OpenApiSchemaConverter
 {
     private const string RefPrefix = "#/components/schemas/";
 
+    /// <summary>
+    /// Serializes <paramref name="schema"/> to JSON and inlines <c>#/components/schemas/...</c> references from
+    /// <paramref name="doc"/>, so the result needs no external definitions.
+    /// </summary>
+    /// <param name="schema">Schema to convert; <c>null</c> yields an empty object.</param>
+    /// <param name="doc">Document whose components resolve references.</param>
+    /// <returns>The inlined JSON Schema.</returns>
     public static JsonObject ToJsonObject(OpenApiSchema? schema, OpenApiDocument doc)
     {
         if (schema is null) return new JsonObject();

@@ -4,6 +4,16 @@ using Utcp.AspNetCore.Models;
 
 namespace Utcp.AspNetCore;
 
+/// <summary>
+/// Converts an OpenAPI document into a <see cref="UtcpManual"/>.
+/// </summary>
+/// <remarks>
+/// Rules: each operation with an <c>operationId</c> (GET/POST/PUT/DELETE/PATCH) becomes a tool named by it;
+/// path/query/header parameters plus the request body become <c>inputs</c>; the 200 (else first 2xx) response schema
+/// becomes <c>outputs</c>; security schemes (operation-level, else document-level) become <c>auth</c> with
+/// <c>${...}</c> placeholders; <c>servers[0]</c> is the base URL, falling back to the caller-supplied URL when
+/// absent or not absolute http(s).
+/// </remarks>
 public static class OpenApiToUtcpConverter
 {
     private static string? MethodName(OperationType t) => t switch
@@ -16,6 +26,11 @@ public static class OpenApiToUtcpConverter
         _ => null,
     };
 
+    /// <summary>Builds the manual for <paramref name="doc"/>.</summary>
+    /// <param name="doc">The OpenAPI document to convert.</param>
+    /// <param name="fallbackBaseUrl">Base URL used when the document has no usable <c>servers[0]</c> (typically the request origin).</param>
+    /// <param name="options">Supplies the emitted <c>manual_version</c>.</param>
+    /// <returns>The generated manual.</returns>
     public static UtcpManual Convert(OpenApiDocument doc, string fallbackBaseUrl, UtcpOptions options)
     {
         var baseUrl = ResolveBaseUrl(doc, fallbackBaseUrl);
