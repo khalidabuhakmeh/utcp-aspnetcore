@@ -69,6 +69,13 @@ dotnet test
 
 The tests call the live `/utcp` endpoint and validate it against a JSON Schema (`tests/Utcp.AspNetCore.Tests/Schemas/utcp-manual.schema.json`).
 
+## Security notes
+
+- `/utcp` is anonymous by default and enumerates all documented operations, including secured ones. That is by design (it is a discovery endpoint), but if your API surface is sensitive, protect it: `app.MapUtcp("/utcp").RequireAuthorization();`.
+- The manual never contains real tokens — secured tools emit the placeholder `Bearer ${API_TOKEN_VARNAME}` for the agent to substitute.
+- When `BaseUrl` is unset, tool URLs reflect the incoming request's `Host` header. Behind proxies or on the open internet, set `UtcpOptions.BaseUrl` (or restrict allowed hosts) so an attacker-controlled Host header can't be reflected into the manual.
+- The sample's `AddJwtBearer()` has no authority/key configuration and is **not production-ready**; it exists only to demonstrate the security-scheme → UTCP auth mapping.
+
 ## Limitations
 
 - HTTP call templates only.
