@@ -1,11 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using JetBrains.Annotations;
 
 namespace Utcp.AspNetCore;
 
 /// <summary>
 ///     Shared JSON settings used to serialize UTCP manuals so the wire format matches the UTCP spec.
 /// </summary>
+[PublicAPI]
 public static class UtcpJson
 {
     /// <summary>

@@ -1,8 +1,10 @@
 using System.Text.Json.Nodes;
+using JetBrains.Annotations;
 
 namespace Utcp.AspNetCore.Models;
 
 /// <summary>A single callable tool in a <see cref="UtcpManual" />, generated from one OpenAPI operation.</summary>
+[PublicAPI]
 public sealed class UtcpTool
 {
     /// <summary>JSON <c>name</c>: unique tool name; the operation's <c>operationId</c>.</summary>

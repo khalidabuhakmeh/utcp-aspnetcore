@@ -1,8 +1,11 @@
+using JetBrains.Annotations;
+
 namespace Utcp.AspNetCore.Models;
 
 /// <summary>
 ///     UTCP HTTP call template: tells an agent how to invoke a tool over HTTP (URL, verb, body and header mapping, auth).
 /// </summary>
+[PublicAPI]
 public sealed class HttpCallTemplate
 {
     /// <summary>JSON <c>name</c>: call template name; set to the operation's <c>operationId</c>.</summary>

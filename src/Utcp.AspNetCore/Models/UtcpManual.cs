@@ -1,9 +1,12 @@
+using JetBrains.Annotations;
+
 namespace Utcp.AspNetCore.Models;
 
 /// <summary>
 ///     A UTCP manual: the discovery document an agent fetches to learn which tools an API offers and how to call them.
 ///     This is the payload served by the endpoint mapped with <c>MapUtcp</c>.
 /// </summary>
+[PublicAPI]
 public sealed class UtcpManual
 {
     /// <summary>JSON <c>manual_version</c>: version of this manual's content (from <see cref="UtcpOptions.ManualVersion" />).</summary>

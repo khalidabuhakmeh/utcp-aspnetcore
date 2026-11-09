@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Options;
 namespace Utcp.AspNetCore;
 
 /// <summary>Endpoint mapping for the UTCP manual.</summary>
+[PublicAPI]
 public static class UtcpEndpointRouteBuilderExtensions
 {
     /// <summary>

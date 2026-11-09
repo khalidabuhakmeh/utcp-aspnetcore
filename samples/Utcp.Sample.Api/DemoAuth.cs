@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 
@@ -14,6 +15,7 @@ public static class DemoSchemes
     public const string Basic = "Basic";
 }
 
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public sealed class DemoAuthOptions : AuthenticationSchemeOptions
 {
     // No working defaults: credentials must be supplied via configuration

@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace Utcp.AspNetCore;
 
 /// <summary>
@@ -5,6 +7,7 @@ namespace Utcp.AspNetCore;
 ///     Everything else (base URL, auth) is derived from the OpenAPI document: the base URL from <c>servers[0]</c>
 ///     (falling back to the request's scheme/host/pathBase) and auth from the document's security schemes.
 /// </summary>
+[PublicAPI]
 public sealed class UtcpOptions
 {
     /// <summary>

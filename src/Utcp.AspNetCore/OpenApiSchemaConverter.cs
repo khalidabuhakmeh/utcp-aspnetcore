@@ -1,12 +1,14 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using JetBrains.Annotations;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Writers;
 
 namespace Utcp.AspNetCore;
 
 /// <summary>Converts OpenAPI schemas into self-contained JSON Schema objects for UTCP inputs/outputs.</summary>
+[PublicAPI]
 public static class OpenApiSchemaConverter
 {
     private const string RefPrefix = "#/components/schemas/";

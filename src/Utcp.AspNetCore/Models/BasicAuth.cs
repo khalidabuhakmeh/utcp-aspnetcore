@@ -1,9 +1,12 @@
+using JetBrains.Annotations;
+
 namespace Utcp.AspNetCore.Models;
 
 /// <summary>
 ///     UTCP <c>basic</c> auth (HTTP Basic). Both fields are <c>${PLACEHOLDER}</c> variables the agent fills in,
 ///     never real credentials.
 /// </summary>
+[PublicAPI]
 public sealed class BasicAuth : UtcpAuth
 {
     /// <summary>JSON <c>auth_type</c>; always <c>"basic"</c>.</summary>

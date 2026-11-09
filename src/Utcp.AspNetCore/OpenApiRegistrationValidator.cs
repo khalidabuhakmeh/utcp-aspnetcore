@@ -7,7 +7,7 @@ namespace Utcp.AspNetCore;
 
 internal static class OpenApiRegistration
 {
-    internal static Type? DocumentServiceType { get; } =
+    private static Type? DocumentServiceType { get; } =
         typeof(OpenApiOptions).Assembly
             .GetType("Microsoft.AspNetCore.OpenApi.OpenApiDocumentService");
 
@@ -39,9 +39,9 @@ internal sealed class UtcpStartupValidator(IServiceProvider serviceProvider, IOp
 {
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        if (!OpenApiRegistration.IsRegistered(serviceProvider, options.Value.DocumentName))
-            throw OpenApiRegistration.CreateMissingOpenApiException(options.Value.DocumentName, "AddUtcp()");
-        return Task.CompletedTask;
+        return !OpenApiRegistration.IsRegistered(serviceProvider, options.Value.DocumentName)
+            ? throw OpenApiRegistration.CreateMissingOpenApiException(options.Value.DocumentName, "AddUtcp()")
+            : Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

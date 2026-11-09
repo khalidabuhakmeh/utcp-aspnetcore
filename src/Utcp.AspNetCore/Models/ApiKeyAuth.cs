@@ -1,9 +1,12 @@
+using JetBrains.Annotations;
+
 namespace Utcp.AspNetCore.Models;
 
 /// <summary>
 ///     UTCP <c>api_key</c> auth: a key (or bearer token) sent in a header, query string, or cookie.
 ///     Also used for HTTP bearer schemes, emitted as <c>Authorization: Bearer ${NAME_TOKEN}</c>.
 /// </summary>
+[PublicAPI]
 public sealed class ApiKeyAuth : UtcpAuth
 {
     /// <summary>JSON <c>auth_type</c>; always <c>"api_key"</c>.</summary>

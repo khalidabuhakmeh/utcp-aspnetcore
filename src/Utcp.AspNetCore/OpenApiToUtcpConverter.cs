@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using JetBrains.Annotations;
 using Microsoft.OpenApi.Models;
 using Utcp.AspNetCore.Models;
 
@@ -14,6 +15,7 @@ namespace Utcp.AspNetCore;
 ///     <c>${...}</c> placeholders; <c>servers[0]</c> is the base URL, falling back to the caller-supplied URL when
 ///     absent or not absolute http(s).
 /// </remarks>
+[PublicAPI]
 public static class OpenApiToUtcpConverter
 {
     private static string? MethodName(OperationType t)

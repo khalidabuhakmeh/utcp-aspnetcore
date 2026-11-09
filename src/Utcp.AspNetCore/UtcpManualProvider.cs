@@ -9,16 +9,11 @@ using Utcp.AspNetCore.Models;
 
 namespace Utcp.AspNetCore;
 
-internal sealed class UtcpManualProvider
+internal sealed class UtcpManualProvider(IOptions<UtcpOptions> options)
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
-    private readonly UtcpOptions _options;
+    private readonly UtcpOptions _options = options.Value;
     private OpenApiDocument? _doc;
-
-    public UtcpManualProvider(IOptions<UtcpOptions> options)
-    {
-        _options = options.Value;
-    }
 
     public async Task<UtcpManual> GetManualAsync(HttpContext context)
     {

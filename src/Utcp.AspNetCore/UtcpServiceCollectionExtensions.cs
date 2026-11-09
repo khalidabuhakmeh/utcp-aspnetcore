@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -5,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 namespace Utcp.AspNetCore;
 
 /// <summary>Dependency-injection registration for UTCP support.</summary>
+[PublicAPI]
 public static class UtcpServiceCollectionExtensions
 {
     /// <summary>
