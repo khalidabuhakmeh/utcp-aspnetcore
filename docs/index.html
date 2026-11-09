@@ -73,7 +73,7 @@ footer a:hover{color:var(--accent-fg)}
 <body>
 <nav><div>
 <a class="brand" href="#"><img src="icon-64.png" alt="" width="22" height="22">Utcp.AspNetCore</a>
-<a href="#what">What is UTCP?</a><a href="#quickstart">Quickstart</a><a href="#mapping">Mapping</a><a href="#auth">Auth</a><a href="#options">Options</a><a href="#security">Security</a>
+<a href="#what">What is UTCP?</a><a href="#quickstart">Quickstart</a><a href="#example">Example</a><a href="#mapping">Mapping</a><a href="#auth">Auth</a><a href="#sample">Sample</a><a href="#options">Options</a><a href="#security">Security</a>
 </div></nav>
 
 <header><div>
@@ -125,7 +125,7 @@ app.Run();</code></pre>
   <span class="tok-p">"tools"</span>: [
     {
       <span class="tok-p">"name"</span>: <span class="tok-s">"GetWeather"</span>,
-      <span class="tok-p">"description"</span>: <span class="tok-s">"Get the forecast for a city"</span>,
+      <span class="tok-p">"description"</span>: <span class="tok-s">"Get a multi-day weather forecast for a city"</span>,
       <span class="tok-p">"inputs"</span>: {
         <span class="tok-p">"type"</span>: <span class="tok-s">"object"</span>,
         <span class="tok-p">"properties"</span>: {
@@ -142,7 +142,7 @@ app.Run();</code></pre>
     },
     {
       <span class="tok-p">"name"</span>: <span class="tok-s">"GetCurrentUser"</span>,
-      <span class="tok-p">"description"</span>: <span class="tok-s">"Get the signed-in user"</span>,
+      <span class="tok-p">"description"</span>: <span class="tok-s">"Get the current authenticated user"</span>,
       <span class="tok-p">"tool_call_template"</span>: {
         <span class="tok-p">"call_template_type"</span>: <span class="tok-s">"http"</span>,
         <span class="tok-p">"http_method"</span>: <span class="tok-s">"GET"</span>,
@@ -157,7 +157,54 @@ app.Run();</code></pre>
     }
   ]
 }</code></pre>
-<p>The repo includes a sample with six endpoints: <code>dotnet run --project samples/Utcp.Sample.Api</code>.</p>
+<p>The repo includes a sample with six endpoints — see <a href="#sample">Run the sample</a>.</p>
+</section>
+
+<section id="example">
+<h2>Example: endpoint → tool</h2>
+<p>A decorated minimal API endpoint:</p>
+<pre data-lang="C#"><code>app.MapGet(<span class="tok-s">"/weather/{city}"</span>, (<span class="tok-k">string</span> city, <span class="tok-k">int</span>? days) =&gt;
+        <span class="tok-t">TypedResults</span>.Ok(GetForecasts(city, days ?? <span class="tok-n">3</span>)))
+    .WithName(<span class="tok-s">"GetWeather"</span>)                                     <span class="tok-c">// → tool name</span>
+    .WithSummary(<span class="tok-s">"Get a multi-day weather forecast for a city"</span>) <span class="tok-c">// → description</span>
+    .WithTags(<span class="tok-s">"Weather"</span>);                                       <span class="tok-c">// → tags</span>
+
+<span class="tok-k">record</span> <span class="tok-t">WeatherForecast</span>(<span class="tok-k">string</span> City, <span class="tok-t">DateOnly</span> Date, <span class="tok-k">int</span> TemperatureC, <span class="tok-k">string</span> Summary);</code></pre>
+<p>becomes this tool in the <code>/utcp</code> manual (actual output):</p>
+<pre data-lang="json"><code>{
+  <span class="tok-p">"name"</span>: <span class="tok-s">"GetWeather"</span>,
+  <span class="tok-p">"description"</span>: <span class="tok-s">"Get a multi-day weather forecast for a city"</span>,
+  <span class="tok-p">"tags"</span>: [<span class="tok-s">"Weather"</span>],
+  <span class="tok-p">"inputs"</span>: {
+    <span class="tok-p">"type"</span>: <span class="tok-s">"object"</span>,
+    <span class="tok-p">"properties"</span>: {
+      <span class="tok-p">"city"</span>: { <span class="tok-p">"type"</span>: <span class="tok-s">"string"</span> },
+      <span class="tok-p">"days"</span>: { <span class="tok-p">"type"</span>: <span class="tok-s">"integer"</span>, <span class="tok-p">"format"</span>: <span class="tok-s">"int32"</span> }
+    },
+    <span class="tok-p">"required"</span>: [<span class="tok-s">"city"</span>]
+  },
+  <span class="tok-p">"outputs"</span>: {
+    <span class="tok-p">"type"</span>: <span class="tok-s">"array"</span>,
+    <span class="tok-p">"items"</span>: {
+      <span class="tok-p">"required"</span>: [<span class="tok-s">"city"</span>, <span class="tok-s">"date"</span>, <span class="tok-s">"temperatureC"</span>, <span class="tok-s">"summary"</span>],
+      <span class="tok-p">"type"</span>: <span class="tok-s">"object"</span>,
+      <span class="tok-p">"properties"</span>: {
+        <span class="tok-p">"city"</span>: { <span class="tok-p">"type"</span>: <span class="tok-s">"string"</span> },
+        <span class="tok-p">"date"</span>: { <span class="tok-p">"type"</span>: <span class="tok-s">"string"</span>, <span class="tok-p">"format"</span>: <span class="tok-s">"date"</span> },
+        <span class="tok-p">"temperatureC"</span>: { <span class="tok-p">"type"</span>: <span class="tok-s">"integer"</span>, <span class="tok-p">"format"</span>: <span class="tok-s">"int32"</span> },
+        <span class="tok-p">"summary"</span>: { <span class="tok-p">"type"</span>: <span class="tok-s">"string"</span> }
+      }
+    }
+  },
+  <span class="tok-p">"tool_call_template"</span>: {
+    <span class="tok-p">"name"</span>: <span class="tok-s">"GetWeather"</span>,
+    <span class="tok-p">"call_template_type"</span>: <span class="tok-s">"http"</span>,
+    <span class="tok-p">"url"</span>: <span class="tok-s">"http://localhost:5080/weather/{city}"</span>,
+    <span class="tok-p">"http_method"</span>: <span class="tok-s">"GET"</span>,
+    <span class="tok-p">"content_type"</span>: <span class="tok-s">"application/json"</span>
+  }
+}</code></pre>
+<p>The route's <code>{city}</code> stays a placeholder in the tool URL, the optional <code>days</code> query parameter becomes an optional input, and the <code>WeatherForecast[]</code> response type becomes the <code>outputs</code> schema. Add <code>.RequireAuthorization()</code> (with a matching OpenAPI security scheme) and the tool gains an <code>auth</code> block — see <a href="#auth">Auth schemes</a>.</p>
 </section>
 
 <section id="mapping">
@@ -192,6 +239,26 @@ app.Run();</code></pre>
 <p>OAuth2 and other schemes are ignored.</p>
 </section>
 
+<section id="sample">
+<h2>Run the sample</h2>
+<pre data-lang="shell"><code>dotnet run <span class="tok-m">--project</span> samples/Utcp.Sample.Api
+curl <span class="tok-m">-s</span> <span class="tok-s">http://localhost:5080/utcp</span></code></pre>
+<p>The sample exposes six endpoints:</p>
+<ul>
+<li><code>GET /weather/{city}?days=3</code> (<code>GetWeather</code>): path and query inputs.</li>
+<li><code>POST /orders</code> (<code>CreateOrder</code>): JSON body.</li>
+<li><code>GET /me</code> (<code>GetCurrentUser</code>): requires JWT bearer auth, so its tool includes the <code>auth</code> block.</li>
+<li><code>GET /admin/stats</code> (<code>GetAdminStats</code>): API key in the <code>X-Api-Key</code> header (scheme <code>ApiKeyHeader</code>).</li>
+<li><code>GET /reports</code> (<code>GetReports</code>): API key in the <code>api_key</code> query parameter (scheme <code>ApiKeyQuery</code>).</li>
+<li><code>GET /legacy/export</code> (<code>GetLegacyExport</code>): HTTP Basic (scheme <code>Basic</code>).</li>
+</ul>
+<p><strong>Demo credentials</strong> (sample only, bound from the <code>DemoAuth</code> configuration section): <code>appsettings.json</code> ships <strong>empty values and the handlers fail closed</strong> — secured endpoints reject everything until credentials are configured. <code>appsettings.Development.json</code> supplies dev-only values (API key <code>demo-key</code>; basic <code>demo</code> / <code>demo</code>), so they only work when <code>ASPNETCORE_ENVIRONMENT=Development</code> (the default for <code>dotnet run</code>). For anything else, supply your own via user-secrets or environment variables (e.g. <code>DemoAuth__ApiKey</code>).</p>
+<pre data-lang="shell"><code>curl <span class="tok-m">-H</span> <span class="tok-s">"X-Api-Key: demo-key"</span> <span class="tok-s">http://localhost:5080/admin/stats</span></code></pre>
+<h3>Tests</h3>
+<pre data-lang="shell"><code>dotnet test</code></pre>
+<p>The tests call the live <code>/utcp</code> endpoint and validate it against a JSON Schema (<code>tests/Utcp.AspNetCore.Tests/Schemas/utcp-manual.schema.json</code>).</p>
+</section>
+
 <section id="options">
 <h2>Options</h2>
 <p>Configure with <code>AddUtcp(o =&gt; ...)</code> (<code>UtcpOptions</code>).</p>
@@ -209,11 +276,13 @@ app.Run();</code></pre>
 <pre data-lang="C#"><code>app.MapUtcp(<span class="tok-s">"/utcp"</span>).RequireAuthorization();</code></pre></li>
 <li>The manual never contains real tokens. Secured tools emit placeholders such as <code>Bearer ${BEARER_TOKEN}</code> for the agent to substitute.</li>
 <li>Tool URLs use the OpenAPI document's <code>servers[0].Url</code> when absolute; otherwise they reflect the request's <code>Host</code> header. Behind proxies or on the open internet, add a server entry via a document transformer that sets <code>document.Servers</code>, so an attacker-controlled Host header can't be reflected into the manual.</li>
+<li>The sample's <code>AddJwtBearer()</code> has no authority/key configuration and is <strong>not production-ready</strong>; it exists only to demonstrate the security-scheme → UTCP auth mapping.</li>
 </ul>
 <h3>Limitations</h3>
 <ul>
 <li>HTTP call templates only.</li>
-<li>Only <code>http</code> bearer/basic and <code>apiKey</code> schemes are mapped.</li>
+<li>Only <code>http</code> bearer/basic and <code>apiKey</code> schemes are mapped. OAuth2 and other schemes are ignored.</li>
+<li>Operations need an <code>operationId</code>, or they are skipped.</li>
 <li>Targets .NET 9 and OpenAPI 3.0 documents from <code>Microsoft.AspNetCore.OpenApi</code>.</li>
 </ul>
 </section>
