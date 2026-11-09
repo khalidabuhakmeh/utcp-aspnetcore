@@ -43,6 +43,62 @@ Set an `operationId` on each endpoint (for example `.WithName("GetWeather")`). T
 
 ## OpenAPI → UTCP mapping
 
+### Example: endpoint → tool
+
+A decorated minimal API endpoint:
+
+```csharp
+app.MapGet("/weather/{city}", (string city, int? days) =>
+        TypedResults.Ok(GetForecasts(city, days ?? 3)))
+    .WithName("GetWeather")                                     // → tool name
+    .WithSummary("Get a multi-day weather forecast for a city") // → description
+    .WithTags("Weather");                                       // → tags
+
+record WeatherForecast(string City, DateOnly Date, int TemperatureC, string Summary);
+```
+
+becomes this tool in the `/utcp` manual (actual output):
+
+```json
+{
+  "name": "GetWeather",
+  "description": "Get a multi-day weather forecast for a city",
+  "tags": ["Weather"],
+  "inputs": {
+    "type": "object",
+    "properties": {
+      "city": { "type": "string" },
+      "days": { "type": "integer", "format": "int32" }
+    },
+    "required": ["city"]
+  },
+  "outputs": {
+    "type": "array",
+    "items": {
+      "required": ["city", "date", "temperatureC", "summary"],
+      "type": "object",
+      "properties": {
+        "city": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "temperatureC": { "type": "integer", "format": "int32" },
+        "summary": { "type": "string" }
+      }
+    }
+  },
+  "tool_call_template": {
+    "name": "GetWeather",
+    "call_template_type": "http",
+    "url": "http://localhost:5080/weather/{city}",
+    "http_method": "GET",
+    "content_type": "application/json"
+  }
+}
+```
+
+The route's `{city}` stays a placeholder in the tool URL, the optional `days` query parameter becomes an optional input, and the `WeatherForecast[]` response type becomes the `outputs` schema. Add `.RequireAuthorization()` (with a matching OpenAPI security scheme) and the tool gains an `auth` block — see below.
+
+### Mapping rules
+
 | OpenAPI | UTCP |
 | --- | --- |
 | `operationId` | tool `name` (operations without one are skipped) |
