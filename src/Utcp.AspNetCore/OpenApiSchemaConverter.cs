@@ -1,6 +1,6 @@
 using System.Globalization;
+using System.Text.Json;
 using System.Text.Json.Nodes;
-using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Writers;
 
@@ -12,8 +12,8 @@ public static class OpenApiSchemaConverter
     private const string RefPrefix = "#/components/schemas/";
 
     /// <summary>
-    /// Serializes <paramref name="schema"/> to JSON and inlines <c>#/components/schemas/...</c> references from
-    /// <paramref name="doc"/>, so the result needs no external definitions.
+    ///     Serializes <paramref name="schema" /> to JSON and inlines <c>#/components/schemas/...</c> references from
+    ///     <paramref name="doc" />, so the result needs no external definitions.
     /// </summary>
     /// <param name="schema">Schema to convert; <c>null</c> yields an empty object.</param>
     /// <param name="doc">Document whose components resolve references.</param>
@@ -39,7 +39,7 @@ public static class OpenApiSchemaConverter
         switch (node)
         {
             case JsonObject obj:
-                if (obj["$ref"] is JsonNode r && r.GetValueKind() == System.Text.Json.JsonValueKind.String)
+                if (obj["$ref"] is JsonNode r && r.GetValueKind() == JsonValueKind.String)
                 {
                     var rs = r.GetValue<string>();
                     if (rs.StartsWith(RefPrefix, StringComparison.Ordinal))
@@ -55,11 +55,16 @@ public static class OpenApiSchemaConverter
                                 target.SerializeAsV3WithoutReference(new OpenApiJsonWriter(sw));
                                 return Resolve(JsonNode.Parse(sw.ToString()), doc, visiting);
                             }
-                            finally { visiting.Remove(id); }
+                            finally
+                            {
+                                visiting.Remove(id);
+                            }
                         }
                     }
+
                     return obj.DeepClone();
                 }
+
                 var result = new JsonObject();
                 foreach (var kv in obj)
                     result[kv.Key] = Resolve(kv.Value, doc, visiting);

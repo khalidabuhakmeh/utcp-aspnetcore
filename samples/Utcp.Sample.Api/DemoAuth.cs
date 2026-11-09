@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
@@ -25,10 +26,12 @@ public sealed class DemoAuthOptions : AuthenticationSchemeOptions
 internal static class DemoCredential
 {
     /// <summary>Constant-time comparison; fails closed when the expected value is unconfigured.</summary>
-    public static bool Matches(string? expected, string provided) =>
-        !string.IsNullOrEmpty(expected) &&
-        System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(
-            Encoding.UTF8.GetBytes(expected), Encoding.UTF8.GetBytes(provided));
+    public static bool Matches(string? expected, string provided)
+    {
+        return !string.IsNullOrEmpty(expected) &&
+               CryptographicOperations.FixedTimeEquals(
+                   Encoding.UTF8.GetBytes(expected), Encoding.UTF8.GetBytes(provided));
+    }
 }
 
 /// <summary>Demo-only api-key handler. Reads X-Api-Key header or api_key query depending on scheme.</summary>
@@ -37,13 +40,15 @@ public sealed class ApiKeyHandler(IOptionsMonitor<DemoAuthOptions> options, ILog
 {
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        string? key = Scheme.Name == DemoSchemes.ApiKeyQuery
+        var key = Scheme.Name == DemoSchemes.ApiKeyQuery
             ? Request.Query["api_key"].FirstOrDefault()
             : Request.Headers["X-Api-Key"].FirstOrDefault();
         if (string.IsNullOrEmpty(key)) return Task.FromResult(AuthenticateResult.NoResult());
-        if (!DemoCredential.Matches(Options.ApiKey, key)) return Task.FromResult(AuthenticateResult.Fail("Invalid API key"));
+        if (!DemoCredential.Matches(Options.ApiKey, key))
+            return Task.FromResult(AuthenticateResult.Fail("Invalid API key"));
         var id = new ClaimsIdentity([new Claim(ClaimTypes.Name, "api-key-client")], Scheme.Name);
-        return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(id), Scheme.Name)));
+        return Task.FromResult(
+            AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(id), Scheme.Name)));
     }
 }
 
@@ -54,7 +59,8 @@ public sealed class BasicHandler(IOptionsMonitor<DemoAuthOptions> options, ILogg
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         var header = Request.Headers.Authorization.ToString();
-        if (!header.StartsWith("Basic ", StringComparison.OrdinalIgnoreCase)) return Task.FromResult(AuthenticateResult.NoResult());
+        if (!header.StartsWith("Basic ", StringComparison.OrdinalIgnoreCase))
+            return Task.FromResult(AuthenticateResult.NoResult());
         try
         {
             var parts = Encoding.UTF8.GetString(Convert.FromBase64String(header[6..])).Split(':', 2);
@@ -63,9 +69,13 @@ public sealed class BasicHandler(IOptionsMonitor<DemoAuthOptions> options, ILogg
                 || !DemoCredential.Matches(Options.Password, parts[1]))
                 return Task.FromResult(AuthenticateResult.Fail("Invalid credentials"));
             var id = new ClaimsIdentity([new Claim(ClaimTypes.Name, parts[0])], Scheme.Name);
-            return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(id), Scheme.Name)));
+            return Task.FromResult(
+                AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(id), Scheme.Name)));
         }
-        catch (FormatException) { return Task.FromResult(AuthenticateResult.Fail("Malformed header")); }
+        catch (FormatException)
+        {
+            return Task.FromResult(AuthenticateResult.Fail("Malformed header"));
+        }
     }
 
     protected override Task HandleChallengeAsync(AuthenticationProperties properties)

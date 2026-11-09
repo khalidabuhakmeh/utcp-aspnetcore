@@ -5,17 +5,22 @@ namespace Utcp.AspNetCore.Tests;
 
 public class UtcpEndpointTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
 {
-    private async Task<JsonObject> GetManual() =>
-        JsonNode.Parse(await factory.CreateClient().GetStringAsync("/utcp"))!.AsObject();
+    private async Task<JsonObject> GetManual()
+    {
+        return JsonNode.Parse(await factory.CreateClient().GetStringAsync("/utcp"))!.AsObject();
+    }
 
-    private static JsonObject Tool(JsonObject m, string name) =>
-        m["tools"]!.AsArray().Select(t => t!.AsObject()).Single(t => (string)t["name"]! == name);
+    private static JsonObject Tool(JsonObject m, string name)
+    {
+        return m["tools"]!.AsArray().Select(t => t!.AsObject()).Single(t => (string)t["name"]! == name);
+    }
 
     [Fact]
     public async Task Root_shape_and_versions()
     {
         var m = await GetManual();
-        Assert.Equal(new[] { "manual_version", "tools", "utcp_version" }, m.Select(p => p.Key).Order(StringComparer.Ordinal));
+        Assert.Equal(new[] { "manual_version", "tools", "utcp_version" },
+            m.Select(p => p.Key).Order(StringComparer.Ordinal));
         Assert.Equal("1.0.0", (string)m["manual_version"]!);
         Assert.Equal("1.0.1", (string)m["utcp_version"]!);
     }
@@ -26,7 +31,10 @@ public class UtcpEndpointTests(WebApplicationFactory<Program> factory) : IClassF
         var m = await GetManual();
         var names = m["tools"]!.AsArray().Select(t => (string)t!["name"]!).ToHashSet();
         Assert.Equal(6, m["tools"]!.AsArray().Count);
-        Assert.Equal(new HashSet<string> { "GetWeather", "CreateOrder", "GetCurrentUser", "GetAdminStats", "GetReports", "GetLegacyExport" }, names);
+        Assert.Equal(
+            new HashSet<string>
+                { "GetWeather", "CreateOrder", "GetCurrentUser", "GetAdminStats", "GetReports", "GetLegacyExport" },
+            names);
     }
 
     [Fact]
@@ -105,7 +113,9 @@ public class UtcpEndpointTests(WebApplicationFactory<Program> factory) : IClassF
             var o = t!.AsObject();
             var keys = o.Select(p => p.Key)
                 .Concat(o["tool_call_template"]!.AsObject().Select(p => p.Key))
-                .Concat(o["tool_call_template"]!.AsObject().TryGetPropertyValue("auth", out var a) ? a!.AsObject().Select(p => p.Key) : []);
+                .Concat(o["tool_call_template"]!.AsObject().TryGetPropertyValue("auth", out var a)
+                    ? a!.AsObject().Select(p => p.Key)
+                    : []);
             Assert.All(keys, k => Assert.DoesNotContain(k, k.Where(char.IsUpper).Select(c => c.ToString())));
         }
     }

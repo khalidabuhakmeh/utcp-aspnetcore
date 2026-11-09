@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.OpenApi.Models;
 using Utcp.AspNetCore.Models;
 
@@ -5,6 +6,8 @@ namespace Utcp.AspNetCore.Tests;
 
 public class OpenApiToUtcpConverterTests
 {
+    private static readonly OpenApiSecurityScheme Bearer = new() { Type = SecuritySchemeType.Http, Scheme = "bearer" };
+
     private static OpenApiDocument Doc(string? server, string id, OpenApiSecurityScheme scheme)
     {
         var doc = new OpenApiDocument
@@ -23,10 +26,11 @@ public class OpenApiToUtcpConverterTests
                             {
                                 new OpenApiSecurityRequirement
                                 {
-                                    [new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = id } }] = []
+                                    [new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = id } }] =
+                                        []
                                 }
                             },
-                            Responses = new OpenApiResponses(),
+                            Responses = new OpenApiResponses()
                         }
                     }
                 }
@@ -37,10 +41,11 @@ public class OpenApiToUtcpConverterTests
         return doc;
     }
 
-    private static HttpCallTemplate Template(OpenApiDocument d, string fallback = "http://fallback") =>
-        (HttpCallTemplate)OpenApiToUtcpConverter.Convert(d, fallback, new UtcpOptions()).Tools.Single().ToolCallTemplate;
-
-    private static readonly OpenApiSecurityScheme Bearer = new() { Type = SecuritySchemeType.Http, Scheme = "bearer" };
+    private static HttpCallTemplate Template(OpenApiDocument d, string fallback = "http://fallback")
+    {
+        return (HttpCallTemplate)OpenApiToUtcpConverter.Convert(d, fallback, new UtcpOptions()).Tools.Single()
+            .ToolCallTemplate;
+    }
 
     [Fact]
     public void Server_url_preferred_over_fallback()
@@ -67,7 +72,8 @@ public class OpenApiToUtcpConverterTests
     [Fact]
     public void ApiKey_scheme_mapped()
     {
-        var s = new OpenApiSecurityScheme { Type = SecuritySchemeType.ApiKey, Name = "X-Key", In = ParameterLocation.Query };
+        var s = new OpenApiSecurityScheme
+            { Type = SecuritySchemeType.ApiKey, Name = "X-Key", In = ParameterLocation.Query };
         var a = Assert.IsType<ApiKeyAuth>(Template(Doc(null, "ApiKey", s)).Auth);
         Assert.Equal("${APIKEY_API_KEY}", a.ApiKey);
         Assert.Equal("X-Key", a.VarName);
@@ -82,7 +88,7 @@ public class OpenApiToUtcpConverterTests
         Assert.Equal("basic", b.AuthType);
         Assert.Equal("${BASIC_USERNAME}", b.Username);
         Assert.Equal("${BASIC_PASSWORD}", b.Password);
-        var json = System.Text.Json.JsonSerializer.Serialize(b, typeof(object), UtcpJson.SerializerOptions);
+        var json = JsonSerializer.Serialize(b, typeof(object), UtcpJson.SerializerOptions);
         Assert.Contains("\"auth_type\": \"basic\"", json);
     }
 }

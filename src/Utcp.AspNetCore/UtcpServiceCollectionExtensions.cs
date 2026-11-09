@@ -8,19 +8,21 @@ namespace Utcp.AspNetCore;
 public static class UtcpServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers UTCP services: <see cref="UtcpOptions"/>, the singleton manual provider that converts the OpenAPI
-    /// document on demand, and a hosted service that validates configuration at host startup.
+    ///     Registers UTCP services: <see cref="UtcpOptions" />, the singleton manual provider that converts the OpenAPI
+    ///     document on demand, and a hosted service that validates configuration at host startup.
     /// </summary>
     /// <remarks>
-    /// Requires ASP.NET Core OpenAPI: call <c>AddOpenApi()</c> as well. If the document named by
-    /// <see cref="UtcpOptions.DocumentName"/> is not registered, host start throws <see cref="InvalidOperationException"/>
-    /// (rather than failing on the first <c>/utcp</c> request). Calling this method repeatedly does not duplicate the validator.
+    ///     Requires ASP.NET Core OpenAPI: call <c>AddOpenApi()</c> as well. If the document named by
+    ///     <see cref="UtcpOptions.DocumentName" /> is not registered, host start throws
+    ///     <see cref="InvalidOperationException" />
+    ///     (rather than failing on the first <c>/utcp</c> request). Calling this method repeatedly does not duplicate the
+    ///     validator.
     /// </remarks>
     /// <param name="services">The service collection to add to.</param>
-    /// <param name="configure">Optional callback to customize <see cref="UtcpOptions"/>.</param>
-    /// <returns>The same <paramref name="services"/> for chaining.</returns>
+    /// <param name="configure">Optional callback to customize <see cref="UtcpOptions" />.</param>
+    /// <returns>The same <paramref name="services" /> for chaining.</returns>
     /// <example>
-    /// <code>
+    ///     <code>
     /// builder.Services.AddOpenApi();
     /// builder.Services.AddUtcp(o => o.ManualVersion = "2.1.0");
     /// 
