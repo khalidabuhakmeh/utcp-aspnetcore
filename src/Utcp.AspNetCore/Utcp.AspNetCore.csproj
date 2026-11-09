@@ -8,16 +8,23 @@
 
     <PackageId>Utcp.AspNetCore</PackageId>
     <Version Condition="'$(Version)' == ''">0.1.0</Version>
+    <Title>UTCP for ASP.NET Core</Title>
     <Authors>Khalid Abuhakmeh</Authors>
-    <Description>Publishes a UTCP (Universal Tool Calling Protocol) v1.1 manual at GET /utcp, built automatically from your ASP.NET Core OpenAPI document so AI agents can discover and call your HTTP endpoints.</Description>
-    <PackageTags>utcp;openapi;aspnetcore;ai;agents;tools</PackageTags>
+    <Copyright>Copyright © 2026 Khalid Abuhakmeh</Copyright>
+    <Description>Publishes a UTCP (Universal Tool Calling Protocol) v1.1 manual at GET /utcp, built automatically from your ASP.NET Core OpenAPI document so AI agents can discover and call your HTTP endpoints. Zero configuration: tool names, inputs, outputs, base URL, and auth (Bearer, API key, Basic) all derive from your endpoint definitions and OpenAPI security schemes.</Description>
+    <PackageTags>utcp;openapi;aspnetcore;ai;agents;tools;llm;tool-calling;minimal-api</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes>https://github.com/khalidabuhakmeh/utcp-aspnetcore/releases</PackageReleaseNotes>
     <RepositoryUrl>https://github.com/khalidabuhakmeh/utcp-aspnetcore</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageProjectUrl>https://github.com/khalidabuhakmeh/utcp-aspnetcore</PackageProjectUrl>
+    <PackageProjectUrl>https://khalidabuhakmeh.github.io/utcp-aspnetcore/</PackageProjectUrl>
+    <NeutralLanguage>en</NeutralLanguage>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EnablePackageValidation>true</EnablePackageValidation>
@@ -28,14 +35,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.*"/>
-    <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.*"/>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0"/>
+    <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.31"/>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all"/>
-    <PackageReference Include="JetBrains.Annotations" Version="*" PrivateAssets="all"/>
+    <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" PrivateAssets="all"/>
   </ItemGroup>
 
   <ItemGroup>
     <None Include="../../README.md" Pack="true" PackagePath="\"/>
+    <None Include="../../assets/icon.png" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>
