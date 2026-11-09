@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Utcp.AspNetCore: Getting Started</title>
+<meta name="description" content="Publish a UTCP manual for AI agents straight from your ASP.NET Core OpenAPI document.">
+<style>
+:root{--bg:#fff;--fg:#1c2230;--muted:#5b6475;--accent:#4f46e5;--card:#f5f6fa;--border:#e1e4ec;--code:#0f172a;--codefg:#e2e8f0}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1117;--fg:#e6e9f0;--muted:#9aa4b8;--accent:#8b8bff;--card:#161b24;--border:#262d3a;--code:#0a0d13;--codefg:#e2e8f0}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:4.5rem}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+nav{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+nav div{max-width:60rem;margin:auto;padding:.7rem 1.25rem;display:flex;gap:1.1rem;flex-wrap:wrap;align-items:center;font-size:.9rem}
+nav b{margin-right:auto}
+a{color:var(--accent)}
+nav a{text-decoration:none;color:var(--muted)}nav a:hover{color:var(--accent)}
+main,footer,header>div{max-width:72ch;margin:auto;padding:0 1.25rem}
+header{padding:4rem 0 1.5rem;border-bottom:1px solid var(--border)}
+h1{font-size:2.6rem;line-height:1.15;margin:0 0 .5rem}
+.lead{font-size:1.2rem;color:var(--muted);margin:0 0 1.25rem}
+.links{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.25rem}
+.links a{border:1px solid var(--border);background:var(--card);border-radius:999px;padding:.25rem .9rem;font-size:.85rem;text-decoration:none;color:var(--fg)}
+.links a:hover{border-color:var(--accent)}
+h2{margin-top:3rem;font-size:1.6rem;border-bottom:1px solid var(--border);padding-bottom:.3rem}
+h3{margin-top:1.8rem}
+pre{position:relative;background:var(--code);color:var(--codefg);border-radius:10px;padding:1rem 1.1rem;overflow-x:auto;font-size:.85rem;line-height:1.5}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}
+:not(pre)>code{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:.05em .35em}
+pre code{font-size:inherit}
+.copy{position:absolute;top:.5rem;right:.5rem;font:inherit;font-size:.72rem;background:#ffffff1a;color:var(--codefg);border:1px solid #ffffff33;border-radius:6px;padding:.15rem .5rem;cursor:pointer}
+.copy:hover{background:#ffffff33}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;vertical-align:top;border:1px solid var(--border);padding:.5rem .7rem}
+th{background:var(--card)}
+.warn{border-left:4px solid #f59e0b;background:var(--card);padding:.6rem 1rem;border-radius:0 8px 8px 0}
+footer{margin-top:4rem;padding-top:1.5rem;padding-bottom:3rem;border-top:1px solid var(--border);color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<nav><div>
+<b>Utcp.AspNetCore</b>
+<a href="#what">What is UTCP?</a><a href="#quickstart">Quickstart</a><a href="#mapping">Mapping</a><a href="#auth">Auth</a><a href="#options">Options</a><a href="#security">Security</a>
+</div></nav>
+
+<header><div>
+<h1>Utcp.AspNetCore</h1>
+<p class="lead">Publish a UTCP manual for AI agents straight from your ASP.NET Core OpenAPI document.</p>
+<div class="links">
+<a href="https://github.com/khalidabuhakmeh/utcp-aspnetcore">GitHub</a>
+<a href="https://www.nuget.org/packages/Utcp.AspNetCore">NuGet</a>
+<a href="https://www.utcp.io/">utcp.io</a>
+</div>
+<pre><code>dotnet add package Utcp.AspNetCore</code></pre>
+</div></header>
+
+<main>
+<section id="what">
+<h2>What is UTCP?</h2>
+<p><a href="https://www.utcp.io/">UTCP</a> (Universal Tool Calling Protocol) lets AI agents discover tools through a manual and then call them directly over their native protocol, with no wrapper server in between. Utcp.AspNetCore publishes a UTCP v1.1 manual at <code>GET /utcp</code>, built automatically from your app's ASP.NET Core OpenAPI document, so agents can discover and call your HTTP endpoints directly.</p>
+</section>
+
+<section id="quickstart">
+<h2>Quickstart</h2>
+<h3>1. Install</h3>
+<pre><code>dotnet add package Utcp.AspNetCore</code></pre>
+<h3>2. Wire it up</h3>
+<pre><code>using Utcp.AspNetCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddOpenApi();   // required: Microsoft.AspNetCore.OpenApi
+builder.Services.AddUtcp();      // optionally: AddUtcp(o =&gt; o.DocumentName = "v2")
+
+var app = builder.Build();
+
+app.MapUtcp("/utcp");            // returns an IEndpointConventionBuilder; chain .AllowAnonymous() etc.
+
+app.Run();</code></pre>
+<p>Set an <code>operationId</code> on each endpoint (for example <code>.WithName("GetWeather")</code>). Operations without one are skipped. The <code>/utcp</code> endpoint is excluded from the OpenAPI document.</p>
+<h3>3. Fetch the manual</h3>
+<pre><code>curl -s http://localhost:5080/utcp</code></pre>
+<p>Trimmed example response:</p>
+<pre><code>{
+  "manual_version": "1.0.0",
+  "utcp_version": "1.0.1",
+  "tools": [
+    {
+      "name": "GetWeather",
+      "description": "Get the forecast for a city",
+      "inputs": {
+        "type": "object",
+        "properties": {
+          "city": { "type": "string" },
+          "days": { "type": "integer" }
+        },
+        "required": ["city"]
+      },
+      "tool_call_template": {
+        "call_template_type": "http",
+        "http_method": "GET",
+        "url": "http://localhost:5080/weather/{city}"
+      }
+    },
+    {
+      "name": "GetCurrentUser",
+      "description": "Get the signed-in user",
+      "tool_call_template": {
+        "call_template_type": "http",
+        "http_method": "GET",
+        "url": "http://localhost:5080/me",
+        "auth": {
+          "auth_type": "api_key",
+          "api_key": "Bearer ${BEARER_TOKEN}",
+          "var_name": "Authorization",
+          "location": "header"
+        }
+      }
+    }
+  ]
+}</code></pre>
+<p>The repo includes a sample with six endpoints: <code>dotnet run --project samples/Utcp.Sample.Api</code>.</p>
+</section>
+
+<section id="mapping">
+<h2>OpenAPI → UTCP mapping</h2>
+<div class="tw"><table>
+<tr><th>OpenAPI</th><th>UTCP</th></tr>
+<tr><td><code>operationId</code></td><td>tool <code>name</code> (operations without one are skipped)</td></tr>
+<tr><td>summary / description</td><td>tool <code>description</code></td></tr>
+<tr><td>operation tags</td><td>tool <code>tags</code></td></tr>
+<tr><td>path / query / header parameters</td><td><code>inputs.properties</code> (<code>required</code> honored; path params always required)</td></tr>
+<tr><td>JSON request body</td><td><code>inputs.properties.body</code>, with <code>tool_call_template.body_field = "body"</code> and <code>content_type</code> set to the media type</td></tr>
+<tr><td>header parameters</td><td><code>tool_call_template.header_fields</code></td></tr>
+<tr><td><code>200</code> response (else first <code>2xx</code>) JSON schema</td><td><code>outputs</code></td></tr>
+<tr><td>path + base URL</td><td><code>tool_call_template.url</code>, keeping <code>{param}</code> placeholders; <code>call_template_type</code> is <code>http</code></td></tr>
+<tr><td>security scheme</td><td><code>auth</code> (see <a href="#auth">Auth schemes</a>)</td></tr>
+</table></div>
+<p><code>$ref</code> component schemas are inlined so each tool is self-contained.</p>
+</section>
+
+<section id="auth">
+<h2>Auth schemes</h2>
+<p>Security schemes are read from the operation, else the document; first match wins. <code>&lt;SCHEMEID&gt;</code> is the scheme's component id, uppercased with non-alphanumerics replaced by <code>_</code> (id <code>Bearer</code> → <code>BEARER_TOKEN</code>). Agents substitute the placeholders; the manual never contains real secrets.</p>
+<h3>HTTP bearer</h3>
+<pre><code>{ "auth_type": "api_key", "api_key": "Bearer ${&lt;SCHEMEID&gt;_TOKEN}", "var_name": "Authorization", "location": "header" }</code></pre>
+<h3>API key in a header</h3>
+<pre><code>{ "auth_type": "api_key", "api_key": "${&lt;SCHEMEID&gt;_API_KEY}", "var_name": "&lt;scheme Name&gt;", "location": "header" }</code></pre>
+<h3>API key in the query string</h3>
+<pre><code>{ "auth_type": "api_key", "api_key": "${&lt;SCHEMEID&gt;_API_KEY}", "var_name": "&lt;scheme Name&gt;", "location": "query" }</code></pre>
+<p class="warn">Query strings commonly end up in access logs and proxies. Prefer header-based keys in real APIs.</p>
+<h3>HTTP basic</h3>
+<pre><code>{ "auth_type": "basic", "username": "${&lt;SCHEMEID&gt;_USERNAME}", "password": "${&lt;SCHEMEID&gt;_PASSWORD}" }</code></pre>
+<p>OAuth2 and other schemes are ignored.</p>
+</section>
+
+<section id="options">
+<h2>Options</h2>
+<p>Configure with <code>AddUtcp(o =&gt; ...)</code> (<code>UtcpOptions</code>).</p>
+<div class="tw"><table>
+<tr><th>Option</th><th>Default</th><th>Description</th></tr>
+<tr><td><code>DocumentName</code></td><td><code>"v1"</code></td><td>Name of the OpenAPI document to convert.</td></tr>
+<tr><td><code>ManualVersion</code></td><td><code>"1.0.0"</code></td><td>Value of <code>manual_version</code> in the manual.</td></tr>
+</table></div>
+</section>
+
+<section id="security">
+<h2>Securing /utcp &amp; security notes</h2>
+<ul>
+<li><code>/utcp</code> is anonymous by default and lists all documented operations, including secured ones. If your API surface is sensitive, protect it:
+<pre><code>app.MapUtcp("/utcp").RequireAuthorization();</code></pre></li>
+<li>The manual never contains real tokens. Secured tools emit placeholders such as <code>Bearer ${BEARER_TOKEN}</code> for the agent to substitute.</li>
+<li>Tool URLs use the OpenAPI document's <code>servers[0].Url</code> when absolute; otherwise they reflect the request's <code>Host</code> header. Behind proxies or on the open internet, add a server entry via a document transformer that sets <code>document.Servers</code>, so an attacker-controlled Host header can't be reflected into the manual.</li>
+</ul>
+<h3>Limitations</h3>
+<ul>
+<li>HTTP call templates only.</li>
+<li>Only <code>http</code> bearer/basic and <code>apiKey</code> schemes are mapped.</li>
+<li>Targets .NET 9 and OpenAPI 3.0 documents from <code>Microsoft.AspNetCore.OpenApi</code>.</li>
+</ul>
+</section>
+</main>
+
+<footer>
+MIT licensed ·
+<a href="https://github.com/khalidabuhakmeh/utcp-aspnetcore">GitHub</a> ·
+<a href="https://www.nuget.org/packages/Utcp.AspNetCore">NuGet</a> ·
+<a href="https://www.utcp.io/">utcp.io</a>
+</footer>
+
+<script>
+document.querySelectorAll('pre').forEach(function(p){
+  var b=document.createElement('button');b.className='copy';b.textContent='Copy';
+  b.onclick=function(){navigator.clipboard.writeText(p.querySelector('code').innerText).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1500)})};
+  p.appendChild(b);
+});
+</script>
+</body>
+</html>

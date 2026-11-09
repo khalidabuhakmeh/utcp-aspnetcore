@@ -3,6 +3,8 @@
 [![CI](https://github.com/khalidabuhakmeh/utcp-aspnetcore/actions/workflows/ci.yml/badge.svg)](https://github.com/khalidabuhakmeh/utcp-aspnetcore/actions/workflows/ci.yml)
 [![NuGet](https://img.shields.io/nuget/v/Utcp.AspNetCore.svg)](https://www.nuget.org/packages/Utcp.AspNetCore)
 
+📖 [Getting started guide](https://khalidabuhakmeh.github.io/utcp-aspnetcore/)
+
 Utcp.AspNetCore publishes a [UTCP](https://www.utcp.io/) (Universal Tool Calling Protocol) v1.1 manual at `GET /utcp`. It builds the manual automatically from your app's ASP.NET Core OpenAPI document, so AI agents can discover and call your HTTP endpoints directly.
 
 ## Install
