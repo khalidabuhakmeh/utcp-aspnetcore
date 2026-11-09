@@ -66,7 +66,9 @@ The sample exposes six endpoints:
 - `GET /reports` (`GetReports`): API key in the `api_key` query parameter (scheme `ApiKeyQuery`).
 - `GET /legacy/export` (`GetLegacyExport`): HTTP Basic (scheme `Basic`).
 
-**Demo credentials** (sample only, configured under `DemoAuth` in `appsettings.json`): API key `demo-key`; basic user/password `demo` / `demo`. Example: `curl -H "X-Api-Key: demo-key" http://localhost:5080/admin/stats`.
+**Demo credentials** (sample only, bound from the `DemoAuth` configuration section): `appsettings.json` ships **empty values and the handlers fail closed** — secured endpoints reject everything until credentials are configured. `appsettings.Development.json` supplies dev-only values (API key `demo-key`; basic `demo` / `demo`), so they only work when `ASPNETCORE_ENVIRONMENT=Development` (the default for `dotnet run`). For anything else, supply your own via user-secrets or environment variables (e.g. `DemoAuth__ApiKey`). Example: `curl -H "X-Api-Key: demo-key" http://localhost:5080/admin/stats`.
+
+> ⚠️ The query-string API key (`GetReports`) exists to demonstrate UTCP's `location: "query"` mapping. Query strings commonly end up in access logs and proxies — prefer header-based keys in real APIs.
 
 ## Tests
 

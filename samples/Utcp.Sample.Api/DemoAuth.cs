@@ -15,9 +15,20 @@ public static class DemoSchemes
 
 public sealed class DemoAuthOptions : AuthenticationSchemeOptions
 {
-    public string ApiKey { get; set; } = "demo-key";
-    public string Username { get; set; } = "demo";
-    public string Password { get; set; } = "demo";
+    // No working defaults: credentials must be supplied via configuration
+    // (appsettings.Development.json, user-secrets, or environment variables).
+    public string? ApiKey { get; set; }
+    public string? Username { get; set; }
+    public string? Password { get; set; }
+}
+
+internal static class DemoCredential
+{
+    /// <summary>Constant-time comparison; fails closed when the expected value is unconfigured.</summary>
+    public static bool Matches(string? expected, string provided) =>
+        !string.IsNullOrEmpty(expected) &&
+        System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(expected), Encoding.UTF8.GetBytes(provided));
 }
 
 /// <summary>Demo-only api-key handler. Reads X-Api-Key header or api_key query depending on scheme.</summary>
@@ -30,7 +41,7 @@ public sealed class ApiKeyHandler(IOptionsMonitor<DemoAuthOptions> options, ILog
             ? Request.Query["api_key"].FirstOrDefault()
             : Request.Headers["X-Api-Key"].FirstOrDefault();
         if (string.IsNullOrEmpty(key)) return Task.FromResult(AuthenticateResult.NoResult());
-        if (key != Options.ApiKey) return Task.FromResult(AuthenticateResult.Fail("Invalid API key"));
+        if (!DemoCredential.Matches(Options.ApiKey, key)) return Task.FromResult(AuthenticateResult.Fail("Invalid API key"));
         var id = new ClaimsIdentity([new Claim(ClaimTypes.Name, "api-key-client")], Scheme.Name);
         return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(id), Scheme.Name)));
     }
@@ -47,7 +58,9 @@ public sealed class BasicHandler(IOptionsMonitor<DemoAuthOptions> options, ILogg
         try
         {
             var parts = Encoding.UTF8.GetString(Convert.FromBase64String(header[6..])).Split(':', 2);
-            if (parts.Length != 2 || parts[0] != Options.Username || parts[1] != Options.Password)
+            if (parts.Length != 2
+                || !DemoCredential.Matches(Options.Username, parts[0])
+                || !DemoCredential.Matches(Options.Password, parts[1]))
                 return Task.FromResult(AuthenticateResult.Fail("Invalid credentials"));
             var id = new ClaimsIdentity([new Claim(ClaimTypes.Name, parts[0])], Scheme.Name);
             return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(id), Scheme.Name)));
