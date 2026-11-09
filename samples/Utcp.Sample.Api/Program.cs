@@ -4,8 +4,16 @@ using Utcp.Sample.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
-builder.Services.AddAuthorization();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer()
+    .AddScheme<DemoAuthOptions, ApiKeyHandler>(DemoSchemes.ApiKeyHeader, o => builder.Configuration.GetSection("DemoAuth").Bind(o))
+    .AddScheme<DemoAuthOptions, ApiKeyHandler>(DemoSchemes.ApiKeyQuery, o => builder.Configuration.GetSection("DemoAuth").Bind(o))
+    .AddScheme<DemoAuthOptions, BasicHandler>(DemoSchemes.Basic, o => builder.Configuration.GetSection("DemoAuth").Bind(o));
+builder.Services.AddAuthorization(o =>
+{
+    foreach (var s in new[] { DemoSchemes.ApiKeyHeader, DemoSchemes.ApiKeyQuery, DemoSchemes.Basic })
+        o.AddPolicy(s, p => p.AddAuthenticationSchemes(s).RequireAuthenticatedUser());
+});
 
 builder.Services.AddOpenApi(o =>
 {
@@ -45,6 +53,18 @@ app.MapGet("/me", (System.Security.Claims.ClaimsPrincipal user) =>
 .WithSummary("Get the current authenticated user")
 .WithTags("Users")
 .RequireAuthorization();
+
+app.MapGet("/admin/stats", () => TypedResults.Ok(new { users = 42, orders = 1337 }))
+.WithName("GetAdminStats").WithSummary("Get admin statistics (API key in header)").WithTags("Admin")
+.RequireAuthorization(DemoSchemes.ApiKeyHeader);
+
+app.MapGet("/reports", () => TypedResults.Ok(new[] { "Q1", "Q2", "Q3" }))
+.WithName("GetReports").WithSummary("List reports (API key in query string)").WithTags("Reports")
+.RequireAuthorization(DemoSchemes.ApiKeyQuery);
+
+app.MapGet("/legacy/export", () => TypedResults.Ok(new { format = "csv", rows = 100 }))
+.WithName("GetLegacyExport").WithSummary("Legacy export (HTTP Basic)").WithTags("Legacy")
+.RequireAuthorization(DemoSchemes.Basic);
 
 app.MapUtcp("/utcp");
 

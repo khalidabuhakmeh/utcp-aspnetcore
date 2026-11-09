@@ -57,11 +57,16 @@ dotnet run --project samples/Utcp.Sample.Api
 curl -s http://localhost:5080/utcp
 ```
 
-The sample exposes three endpoints:
+The sample exposes six endpoints:
 
 - `GET /weather/{city}?days=3` (`GetWeather`): path and query inputs.
 - `POST /orders` (`CreateOrder`): JSON body.
 - `GET /me` (`GetCurrentUser`): requires JWT bearer auth, so its tool includes the `auth` block.
+- `GET /admin/stats` (`GetAdminStats`): API key in the `X-Api-Key` header (scheme `ApiKeyHeader`).
+- `GET /reports` (`GetReports`): API key in the `api_key` query parameter (scheme `ApiKeyQuery`).
+- `GET /legacy/export` (`GetLegacyExport`): HTTP Basic (scheme `Basic`).
+
+**Demo credentials** (sample only, configured under `DemoAuth` in `appsettings.json`): API key `demo-key`; basic user/password `demo` / `demo`. Example: `curl -H "X-Api-Key: demo-key" http://localhost:5080/admin/stats`.
 
 ## Tests
 

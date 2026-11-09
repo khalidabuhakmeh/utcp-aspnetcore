@@ -18,3 +18,14 @@ Content-Type: application/json
 ### Current user (requires bearer token)
 GET {{host}}/me
 Authorization: Bearer {{token}}
+
+### Admin stats (API key in header; demo key)
+GET {{host}}/admin/stats
+X-Api-Key: demo-key
+
+### Reports (API key in query; demo key)
+GET {{host}}/reports?api_key=demo-key
+
+### Legacy export (basic auth demo:demo)
+GET {{host}}/legacy/export
+Authorization: Basic ZGVtbzpkZW1v

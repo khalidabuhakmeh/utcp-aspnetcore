@@ -25,12 +25,12 @@ public class UtcpEndpointTests(WebApplicationFactory<Program> factory) : IClassF
     {
         var m = await GetManual();
         var names = m["tools"]!.AsArray().Select(t => (string)t!["name"]!).ToHashSet();
-        Assert.Equal(3, m["tools"]!.AsArray().Count);
-        Assert.Equal(new HashSet<string> { "GetWeather", "CreateOrder", "GetCurrentUser" }, names);
+        Assert.Equal(6, m["tools"]!.AsArray().Count);
+        Assert.Equal(new HashSet<string> { "GetWeather", "CreateOrder", "GetCurrentUser", "GetAdminStats", "GetReports", "GetLegacyExport" }, names);
     }
 
     [Fact]
-    public async Task Auth_only_on_GetCurrentUser()
+    public async Task Bearer_auth_on_GetCurrentUser_and_none_on_public()
     {
         var m = await GetManual();
         var auth = Tool(m, "GetCurrentUser")["tool_call_template"]!["auth"]!.AsObject();
@@ -41,6 +41,31 @@ public class UtcpEndpointTests(WebApplicationFactory<Program> factory) : IClassF
         Assert.Equal("header", (string)auth["location"]!);
         foreach (var n in new[] { "GetWeather", "CreateOrder" })
             Assert.False(Tool(m, n)["tool_call_template"]!.AsObject().ContainsKey("auth"));
+    }
+
+    [Fact]
+    public async Task Api_key_and_basic_auth_objects()
+    {
+        var m = await GetManual();
+        var h = Tool(m, "GetAdminStats")["tool_call_template"]!["auth"]!.AsObject();
+        Assert.Equal(4, h.Count);
+        Assert.Equal("api_key", (string)h["auth_type"]!);
+        Assert.Equal("${APIKEYHEADER_API_KEY}", (string)h["api_key"]!);
+        Assert.Equal("X-Api-Key", (string)h["var_name"]!);
+        Assert.Equal("header", (string)h["location"]!);
+
+        var q = Tool(m, "GetReports")["tool_call_template"]!["auth"]!.AsObject();
+        Assert.Equal(4, q.Count);
+        Assert.Equal("api_key", (string)q["auth_type"]!);
+        Assert.Equal("${APIKEYQUERY_API_KEY}", (string)q["api_key"]!);
+        Assert.Equal("api_key", (string)q["var_name"]!);
+        Assert.Equal("query", (string)q["location"]!);
+
+        var b = Tool(m, "GetLegacyExport")["tool_call_template"]!["auth"]!.AsObject();
+        Assert.Equal(3, b.Count);
+        Assert.Equal("basic", (string)b["auth_type"]!);
+        Assert.Equal("${BASIC_USERNAME}", (string)b["username"]!);
+        Assert.Equal("${BASIC_PASSWORD}", (string)b["password"]!);
     }
 
     [Fact]

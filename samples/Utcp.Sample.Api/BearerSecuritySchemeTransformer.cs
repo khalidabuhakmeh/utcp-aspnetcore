@@ -17,6 +17,12 @@ public sealed class BearerSecuritySchemeTransformer : IOpenApiDocumentTransforme
             BearerFormat = "JWT",
             In = ParameterLocation.Header
         };
+        document.Components.SecuritySchemes[DemoSchemes.ApiKeyHeader] = new OpenApiSecurityScheme
+            { Type = SecuritySchemeType.ApiKey, Name = "X-Api-Key", In = ParameterLocation.Header };
+        document.Components.SecuritySchemes[DemoSchemes.ApiKeyQuery] = new OpenApiSecurityScheme
+            { Type = SecuritySchemeType.ApiKey, Name = "api_key", In = ParameterLocation.Query };
+        document.Components.SecuritySchemes[DemoSchemes.Basic] = new OpenApiSecurityScheme
+            { Type = SecuritySchemeType.Http, Scheme = "basic" };
         return Task.CompletedTask;
     }
 }
@@ -24,18 +30,27 @@ public sealed class BearerSecuritySchemeTransformer : IOpenApiDocumentTransforme
 /// <summary>Adds the Bearer requirement only to operations that carry IAuthorizeData metadata.</summary>
 public sealed class BearerOperationTransformer : IOpenApiOperationTransformer
 {
+    private static readonly string[] Known = [DemoSchemes.ApiKeyHeader, DemoSchemes.ApiKeyQuery, DemoSchemes.Basic];
+
     public Task TransformAsync(OpenApiOperation operation, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
     {
-        if (context.Description.ActionDescriptor.EndpointMetadata.OfType<IAuthorizeData>().Any())
+        var meta = context.Description.ActionDescriptor.EndpointMetadata;
+        var authData = meta.OfType<IAuthorizeData>().ToList();
+        if (authData.Count == 0) return Task.CompletedTask;
+
+        // Match explicit schemes or policy names against registered demo schemes; default to Bearer.
+        var id = authData
+            .SelectMany(a => (a.AuthenticationSchemes ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Append(a.Policy ?? ""))
+            .FirstOrDefault(n => Known.Contains(n)) ?? "Bearer";
+
+        operation.Security.Add(new OpenApiSecurityRequirement
         {
-            operation.Security.Add(new OpenApiSecurityRequirement
+            [new OpenApiSecurityScheme
             {
-                [new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-                }] = Array.Empty<string>()
-            });
-        }
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = id }
+            }] = Array.Empty<string>()
+        });
         return Task.CompletedTask;
     }
 }
