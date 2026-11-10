@@ -30,10 +30,10 @@ public class UtcpEndpointTests(WebApplicationFactory<Program> factory) : IClassF
     {
         var m = await GetManual();
         var names = m["tools"]!.AsArray().Select(t => (string)t!["name"]!).ToHashSet();
-        Assert.Equal(7, m["tools"]!.AsArray().Count);
+        Assert.Equal(8, m["tools"]!.AsArray().Count);
         Assert.Equal(
             new HashSet<string>
-                { "GetWeather", "CreateOrder", "GetCurrentUser", "GetAdminStats", "GetReports", "GetLegacyExport", "GetProduct" },
+                { "GetWeather", "CreateOrder", "GetCurrentUser", "GetAdminStats", "GetReports", "GetLegacyExport", "GetProduct", "GetStatus" },
             names);
     }
 

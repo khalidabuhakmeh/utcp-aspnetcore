@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Utcp.AspNetCore;
+using Utcp.AspNetCore.Models;
 using Utcp.Sample.Api;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,7 +26,13 @@ builder.Services.AddOpenApi(o =>
     o.AddOperationTransformer<BearerOperationTransformer>();
 });
 builder.Services.AddControllers();
-builder.Services.AddUtcp();
+builder.Services.AddUtcp()
+    .Register<SampleToolSource>()
+    .Configure(ctx =>
+    {
+        // Post-process the final manual, e.g. tag the custom tool.
+        ctx.Manual.Tools.Single(t => t.Name == "GetStatus").Tags.Add("Custom");
+    });
 
 var app = builder.Build();
 
@@ -33,6 +40,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapOpenApi();
+
+// Backing endpoint for the custom GetStatus tool; excluded from OpenAPI
+// so it only appears in the manual via SampleToolSource.
+app.MapGet("/status", () => TypedResults.Ok(new { status = "ok", time = DateTimeOffset.UtcNow }))
+    .ExcludeFromDescription();
 
 app.MapGet("/weather/{city}", (string city, int? days) =>
     {
@@ -83,5 +95,27 @@ public record CreateOrderRequest(string Product, int Quantity);
 public record Order(Guid Id, string Product, int Quantity, string Status);
 
 public record UserInfo(string Name, string[] ClaimTypes);
+
+/// <summary>Demonstrates <see cref="IUtcpToolSource" />: contributes a tool that is not in the OpenAPI document.</summary>
+public sealed class SampleToolSource : IUtcpToolSource
+{
+    public ValueTask<IReadOnlyList<UtcpTool>> GetToolsAsync(UtcpToolSourceContext context,
+        CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<UtcpTool> tools =
+        [
+            new UtcpTool
+            {
+                Name = "GetStatus",
+                Description = "Get service status (custom tool source)",
+                ToolCallTemplate = new HttpCallTemplate
+                {
+                    Name = "GetStatus", Url = context.BaseUrl + "/status", HttpMethod = "GET"
+                }
+            }
+        ];
+        return ValueTask.FromResult(tools);
+    }
+}
 
 public partial class Program;

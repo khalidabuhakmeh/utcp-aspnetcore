@@ -34,6 +34,17 @@ app.Run();
 
 Set an `operationId` on each endpoint (for example `.WithName("GetWeather")`). The `/utcp` endpoint is excluded from the OpenAPI document.
 
+## Custom tools and post-processing
+
+`AddUtcp()` returns a `UtcpBuilder`. Implement `IUtcpToolSource` to add tools that are not in your OpenAPI document, and use `Configure` to post-process the final manual. Order: OpenAPI conversion, then tool sources (registration order), then `Configure` hooks (registration order). Duplicate tool names throw `InvalidOperationException`.
+
+```csharp
+builder.Services.AddUtcp()
+    .Register<MyToolSource>()                       // or .Register(instance)
+    .Configure(ctx => ctx.Remove("GetAdminStats"))  // ctx.Add / Remove / Replace / Manual
+    .Configure(async (ctx, ct) => { /* async hook */ });
+```
+
 ## Options (`UtcpOptions`)
 
 | Option | Default | Description |

@@ -9,7 +9,7 @@ using Utcp.AspNetCore.Models;
 
 namespace Utcp.AspNetCore;
 
-internal sealed class UtcpManualProvider(IOptions<UtcpOptions> options)
+internal sealed class UtcpManualProvider(IOptions<UtcpOptions> options, UtcpBuilderOptions builderOptions)
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly UtcpOptions _options = options.Value;
@@ -17,20 +17,64 @@ internal sealed class UtcpManualProvider(IOptions<UtcpOptions> options)
 
     public async Task<UtcpManual> GetManualAsync(HttpContext context)
     {
-        var doc = await GetDocumentAsync(context.RequestServices);
+        var doc = await GetDocumentAsync(context.RequestServices, context.RequestAborted);
         var req = context.Request;
         var baseUrl = $"{req.Scheme}://{req.Host}{req.PathBase}";
-        return OpenApiToUtcpConverter.Convert(doc, baseUrl, _options);
+        var manual = OpenApiToUtcpConverter.Convert(doc, baseUrl, _options);
+        var ct = context.RequestAborted;
+        var sp = context.RequestServices;
+
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var t in manual.Tools)
+        {
+            if (!names.Add(t.Name))
+            {
+                throw new InvalidOperationException($"Duplicate UTCP tool name '{t.Name}' in OpenAPI document.");
+            }
+        }
+
+        var sourceContext = new UtcpToolSourceContext(baseUrl, _options, sp);
+        foreach (var source in sp.GetServices<IUtcpToolSource>())
+        {
+            var tools = await source.GetToolsAsync(sourceContext, ct);
+            foreach (var tool in tools)
+            {
+                if (!names.Add(tool.Name))
+                {
+                    throw new InvalidOperationException(
+                        $"Duplicate UTCP tool name '{tool.Name}' contributed by {source.GetType().Name}.");
+                }
+
+                manual.Tools.Add(tool);
+            }
+        }
+
+        var manualContext = new UtcpManualContext(manual, sp);
+        foreach (var transform in builderOptions.Transforms)
+        {
+            await transform(manualContext, ct);
+        }
+
+        var final = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var t in manual.Tools)
+        {
+            if (!final.Add(t.Name))
+            {
+                throw new InvalidOperationException($"Duplicate UTCP tool name '{t.Name}' in final manual.");
+            }
+        }
+
+        return manual;
     }
 
-    private async Task<OpenApiDocument> GetDocumentAsync(IServiceProvider sp)
+    private async Task<OpenApiDocument> GetDocumentAsync(IServiceProvider sp, CancellationToken ct)
     {
         if (_doc is not null)
         {
             return _doc;
         }
 
-        await _gate.WaitAsync();
+        await _gate.WaitAsync(ct);
         try
         {
             if (_doc is not null)
@@ -55,10 +99,10 @@ internal sealed class UtcpManualProvider(IOptions<UtcpOptions> options)
 
             var args = method.GetParameters().Select(pi =>
                 pi.ParameterType == typeof(IServiceProvider) ? sp
-                : pi.ParameterType == typeof(CancellationToken) ? CancellationToken.None
+                : pi.ParameterType == typeof(CancellationToken) ? ct
                 : pi.ParameterType.IsValueType ? Activator.CreateInstance(pi.ParameterType) : null).ToArray();
             var task = (Task)method.Invoke(service, args)!;
-            await task.ConfigureAwait(false);
+            await task.WaitAsync(ct).ConfigureAwait(false);
             var generated = (OpenApiDocument)task.GetType().GetProperty("Result")!.GetValue(task)!;
             // Round-trip through JSON so the converter sees a fully resolved, reader-produced document.
             using var sw = new StringWriter();

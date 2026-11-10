@@ -73,7 +73,7 @@ footer a:hover{color:var(--accent-fg)}
 <body>
 <nav><div>
 <a class="brand" href="#"><img src="icon-64.png" alt="" width="22" height="22">Utcp.AspNetCore</a>
-<a href="#what">What is UTCP?</a><a href="#quickstart">Quickstart</a><a href="#example">Example</a><a href="#mapping">Mapping</a><a href="#auth">Auth</a><a href="#sample">Sample</a><a href="#options">Options</a><a href="#security">Security</a>
+<a href="#what">What is UTCP?</a><a href="#quickstart">Quickstart</a><a href="#example">Example</a><a href="#mapping">Mapping</a><a href="#auth">Auth</a><a href="#custom">Custom tools</a><a href="#sample">Sample</a><a href="#options">Options</a><a href="#security">Security</a>
 </div></nav>
 
 <header><div>
@@ -108,7 +108,7 @@ footer a:hover{color:var(--accent-fg)}
 <span class="tok-k">var</span> builder = <span class="tok-t">WebApplication</span>.CreateBuilder(args);
 
 builder.Services.AddOpenApi();   <span class="tok-c">// required: Microsoft.AspNetCore.OpenApi</span>
-builder.Services.AddUtcp();      <span class="tok-c">// optionally: AddUtcp(o =&gt; o.DocumentName = "v2")</span>
+builder.Services.AddUtcp();      <span class="tok-c">// optionally: AddUtcp(o =&gt; o.DocumentName = "v2"); returns a UtcpBuilder</span>
 
 <span class="tok-k">var</span> app = builder.Build();
 
@@ -157,7 +157,7 @@ app.Run();</code></pre>
     }
   ]
 }</code></pre>
-<p>The repo includes a sample with seven endpoints — see <a href="#sample">Run the sample</a>.</p>
+<p>The repo includes a sample with eight tools — see <a href="#sample">Run the sample</a>.</p>
 </section>
 
 <section id="example">
@@ -276,11 +276,52 @@ app.Run();</code></pre>
 <p>OAuth2 and other schemes are ignored.</p>
 </section>
 
+<section id="custom">
+<h2>Custom tools and post-processing</h2>
+<p><code>AddUtcp()</code> returns a <code>UtcpBuilder</code>. Chain extra service registrations through its <code>.Services</code> property, implement <code>IUtcpToolSource</code> to add tools that are not in your OpenAPI document, and use <code>Configure</code> to post-process the final manual.</p>
+<pre data-lang="C#"><code>builder.Services.AddUtcp()
+    .Register&lt;<span class="tok-t">MyToolSource</span>&gt;()                       <span class="tok-c">// or .Register(instance)</span>
+    .Configure(ctx =&gt; ctx.Remove(<span class="tok-s">"GetAdminStats"</span>))  <span class="tok-c">// ctx.Add / Remove / Replace / Manual</span>
+    .Configure(<span class="tok-k">async</span> (ctx, ct) =&gt; { <span class="tok-c">/* async hook */</span> });</code></pre>
+<h3>Tool sources</h3>
+<p><code>.Register&lt;TSource&gt;()</code> or <code>.Register(instance)</code> adds an <code>IUtcpToolSource</code>. Its async <code>GetToolsAsync(UtcpToolSourceContext ctx, CancellationToken ct)</code> returns the tools to add; the context exposes <code>BaseUrl</code>, <code>Options</code> and <code>Services</code>. Register as many sources as you like; registering the same type twice is a no-op.</p>
+<pre data-lang="C#"><code><span class="tok-k">public sealed class</span> <span class="tok-t">SampleToolSource</span> : <span class="tok-t">IUtcpToolSource</span>
+{
+    <span class="tok-k">public</span> <span class="tok-t">ValueTask</span>&lt;<span class="tok-t">IReadOnlyList</span>&lt;<span class="tok-t">UtcpTool</span>&gt;&gt; GetToolsAsync(<span class="tok-t">UtcpToolSourceContext</span> context,
+        <span class="tok-t">CancellationToken</span> cancellationToken = <span class="tok-k">default</span>)
+    {
+        <span class="tok-t">IReadOnlyList</span>&lt;<span class="tok-t">UtcpTool</span>&gt; tools =
+        [
+            <span class="tok-k">new</span> <span class="tok-t">UtcpTool</span>
+            {
+                Name = <span class="tok-s">"GetStatus"</span>,
+                Description = <span class="tok-s">"Get service status (custom tool source)"</span>,
+                ToolCallTemplate = <span class="tok-k">new</span> <span class="tok-t">HttpCallTemplate</span>
+                {
+                    Name = <span class="tok-s">"GetStatus"</span>, Url = context.BaseUrl + <span class="tok-s">"/status"</span>, HttpMethod = <span class="tok-s">"GET"</span>
+                }
+            }
+        ];
+        <span class="tok-k">return</span> <span class="tok-t">ValueTask</span>.FromResult(tools);
+    }
+}</code></pre>
+<h3>Post-processing hooks</h3>
+<p><code>.Configure(ctx =&gt; ...)</code> and <code>.Configure(async (ctx, ct) =&gt; ...)</code> run against a <code>UtcpManualContext</code> after all tools are merged:</p>
+<ul>
+<li><code>Add(tool)</code>: adds a tool; throws if the name already exists.</li>
+<li><code>Remove(name)</code>: removes a tool and returns <code>bool</code> (whether one was removed).</li>
+<li><code>Replace(tool)</code>: replaces a tool by name; throws if it is missing.</li>
+<li><code>Manual</code>: raw access to the manual, e.g. <code>ctx.Manual.Tools.Single(t =&gt; t.Name == "GetStatus").Tags.Add("Custom")</code>.</li>
+</ul>
+<h3>Merge order</h3>
+<p>OpenAPI tools first, then tool sources (registration order), then <code>Configure</code> hooks (registration order). Duplicate tool names throw <code>InvalidOperationException</code>.</p>
+</section>
+
 <section id="sample">
 <h2>Run the sample</h2>
 <pre data-lang="shell"><code>dotnet run <span class="tok-m">--project</span> samples/Utcp.Sample.Api
 curl <span class="tok-m">-s</span> <span class="tok-s">http://localhost:5080/utcp</span></code></pre>
-<p>The sample exposes seven endpoints:</p>
+<p>The sample exposes eight tools — seven OpenAPI endpoints plus a custom <code>GetStatus</code> tool from a tool source (see <a href="#custom">Custom tools</a>):</p>
 <ul>
 <li><code>GET /weather/{city}?days=3</code> (<code>GetWeather</code>): path and query inputs.</li>
 <li><code>POST /orders</code> (<code>CreateOrder</code>): JSON body.</li>

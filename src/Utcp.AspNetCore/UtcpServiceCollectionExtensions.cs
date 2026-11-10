@@ -22,7 +22,7 @@ public static class UtcpServiceCollectionExtensions
     /// </remarks>
     /// <param name="services">The service collection to add to.</param>
     /// <param name="configure">Optional callback to customize <see cref="UtcpOptions" />.</param>
-    /// <returns>The same <paramref name="services" /> for chaining.</returns>
+    /// <returns>A <see cref="UtcpBuilder" /> for registering tool sources and manual hooks.</returns>
     /// <example>
     ///     <code>
     /// builder.Services.AddOpenApi();
@@ -32,7 +32,7 @@ public static class UtcpServiceCollectionExtensions
     /// app.MapUtcp();
     /// </code>
     /// </example>
-    public static IServiceCollection AddUtcp(this IServiceCollection services, Action<UtcpOptions>? configure = null)
+    public static UtcpBuilder AddUtcp(this IServiceCollection services, Action<UtcpOptions>? configure = null)
     {
         var b = services.AddOptions<UtcpOptions>();
         if (configure is not null)
@@ -43,6 +43,14 @@ public static class UtcpServiceCollectionExtensions
         services.AddSingleton<UtcpManualProvider>();
         // Fail fast at host startup (rather than on the first /utcp request) when AddOpenApi() is missing.
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, UtcpStartupValidator>());
-        return services;
+        var builderOptions = services.FirstOrDefault(d => d.ServiceType == typeof(UtcpBuilderOptions))
+            ?.ImplementationInstance as UtcpBuilderOptions;
+        if (builderOptions is null)
+        {
+            builderOptions = new UtcpBuilderOptions();
+            services.AddSingleton(builderOptions);
+        }
+
+        return new UtcpBuilder(services, builderOptions);
     }
 }
